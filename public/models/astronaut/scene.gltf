@@ -1,0 +1,1753 @@
+{
+  "accessors": [
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 8193,
+      "max": [
+        0.335205078125,
+        0.88037109375,
+        0.15844731032848358
+      ],
+      "min": [
+        -0.335205078125,
+        0.0,
+        -0.040283214300870895
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 98316,
+      "componentType": 5126,
+      "count": 8193,
+      "max": [
+        0.9999197125434875,
+        0.9999456405639648,
+        0.9998022317886353
+      ],
+      "min": [
+        -0.9999306201934814,
+        -0.9997298717498779,
+        -0.9997783899307251
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 45174,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 196632,
+      "componentType": 5126,
+      "count": 3972,
+      "max": [
+        0.16128374636173248,
+        0.853515625,
+        0.12133792042732239
+      ],
+      "min": [
+        -0.1607954353094101,
+        0.047999992966651917,
+        -0.0593261756002903
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 244296,
+      "componentType": 5126,
+      "count": 3972,
+      "max": [
+        0.9999468326568604,
+        0.9998422861099243,
+        0.9999178051948547
+      ],
+      "min": [
+        -0.9995543956756592,
+        -0.9999873042106628,
+        -0.999555766582489
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 180696,
+      "componentType": 5125,
+      "count": 18453,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 291960,
+      "componentType": 5126,
+      "count": 5337,
+      "max": [
+        0.17286019027233124,
+        0.99951171875,
+        0.174560546875
+      ],
+      "min": [
+        -0.1726074069738388,
+        0.024999991059303284,
+        -0.028076171875
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 356004,
+      "componentType": 5126,
+      "count": 5337,
+      "max": [
+        1.0,
+        0.9998676180839539,
+        0.9999178051948547
+      ],
+      "min": [
+        -1.0,
+        -0.9995706081390381,
+        -0.9995848536491394
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 254508,
+      "componentType": 5125,
+      "count": 27732,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 420048,
+      "componentType": 5126,
+      "count": 4648,
+      "max": [
+        0.2966308891773224,
+        0.96826171875,
+        0.1525879055261612
+      ],
+      "min": [
+        -0.2761230170726776,
+        0.0859375,
+        -0.0559082068502903
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 475824,
+      "componentType": 5126,
+      "count": 4648,
+      "max": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min": [
+        -1.0,
+        -0.9999630451202393,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 365436,
+      "componentType": 5125,
+      "count": 22182,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 531600,
+      "componentType": 5126,
+      "count": 7939,
+      "max": [
+        0.3092725872993469,
+        0.87890625,
+        0.1574707180261612
+      ],
+      "min": [
+        -0.3083495795726776,
+        0.047999996691942215,
+        -0.061279285699129105
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 626868,
+      "componentType": 5126,
+      "count": 7939,
+      "max": [
+        0.9999141693115234,
+        1.0,
+        0.9999998807907104
+      ],
+      "min": [
+        -0.999923586845398,
+        -0.9999409317970276,
+        -0.9999818205833435
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 454164,
+      "componentType": 5125,
+      "count": 40890,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 722136,
+      "componentType": 5126,
+      "count": 3077,
+      "max": [
+        0.303955078125,
+        0.85498046875,
+        0.174072265625
+      ],
+      "min": [
+        -0.303955078125,
+        0.04992056265473366,
+        -0.0568847730755806
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 759060,
+      "componentType": 5126,
+      "count": 3077,
+      "max": [
+        1.0,
+        0.9994067549705505,
+        1.0
+      ],
+      "min": [
+        -0.9999415278434753,
+        -0.9952192306518555,
+        -0.9977473020553589
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 617724,
+      "componentType": 5125,
+      "count": 14646,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 795984,
+      "componentType": 5126,
+      "count": 990,
+      "max": [
+        0.25659602880477905,
+        0.8291015625,
+        0.1545410007238388
+      ],
+      "min": [
+        -0.25880250334739685,
+        0.2578125,
+        -0.048095714300870895
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 807864,
+      "componentType": 5126,
+      "count": 990,
+      "max": [
+        1.0,
+        0.9982935190200806,
+        1.0
+      ],
+      "min": [
+        -1.0,
+        -0.9454123973846436,
+        -0.9992641806602478
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 676308,
+      "componentType": 5125,
+      "count": 4200,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 819744,
+      "componentType": 5126,
+      "count": 432,
+      "max": [
+        0.284912109375,
+        0.75830078125,
+        0.175048828125
+      ],
+      "min": [
+        -0.284912109375,
+        0.60498046875,
+        0.06274411082267761
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 824928,
+      "componentType": 5126,
+      "count": 432,
+      "max": [
+        0.9961405396461487,
+        0.9908535480499268,
+        1.0
+      ],
+      "min": [
+        -1.0,
+        -0.9981614947319031,
+        -0.9935410022735596
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 693108,
+      "componentType": 5125,
+      "count": 1986,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 830112,
+      "componentType": 5126,
+      "count": 173,
+      "max": [
+        0.0700683742761612,
+        0.9619140625,
+        0.159912109375
+      ],
+      "min": [
+        -0.0700683444738388,
+        0.841796875,
+        0.0891113206744194
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 832188,
+      "componentType": 5126,
+      "count": 173,
+      "max": [
+        0.9687527418136597,
+        0.527509331703186,
+        0.9991551637649536
+      ],
+      "min": [
+        -0.9613873958587646,
+        -0.7249351143836975,
+        0.19144845008850098
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 701052,
+      "componentType": 5125,
+      "count": 864,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 834264,
+      "componentType": 5126,
+      "count": 282,
+      "max": [
+        0.0905761867761612,
+        0.9609375,
+        0.114990234375
+      ],
+      "min": [
+        -0.0905761569738388,
+        0.92919921875,
+        0.0949706882238388
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 837648,
+      "componentType": 5126,
+      "count": 282,
+      "max": [
+        0.9955711364746094,
+        0.8674944639205933,
+        0.9984073042869568
+      ],
+      "min": [
+        -0.9954949021339417,
+        -0.9818798303604126,
+        -0.37543824315071106
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 704508,
+      "componentType": 5125,
+      "count": 1410,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 841032,
+      "componentType": 5126,
+      "count": 190,
+      "max": [
+        0.18608435988426208,
+        0.797668993473053,
+        0.07100006192922592
+      ],
+      "min": [
+        -0.20361562073230743,
+        0.7424958348274231,
+        0.008000056259334087
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 843312,
+      "componentType": 5126,
+      "count": 190,
+      "max": [
+        0.7696223258972168,
+        0.7128163576126099,
+        0.5755693912506104
+      ],
+      "min": [
+        -0.9942818880081177,
+        -0.04302537068724632,
+        -0.6661175489425659
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 710148,
+      "componentType": 5125,
+      "count": 858,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 845592,
+      "componentType": 5126,
+      "count": 133,
+      "max": [
+        0.20318293571472168,
+        0.7950000166893005,
+        0.07100006192922592
+      ],
+      "min": [
+        0.1612345278263092,
+        0.7425134181976318,
+        0.008000056259334087
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 847188,
+      "componentType": 5126,
+      "count": 133,
+      "max": [
+        0.9664967060089111,
+        0.6996304392814636,
+        0.5775794982910156
+      ],
+      "min": [
+        0.5792850852012634,
+        -0.07666607201099396,
+        -0.6620007753372192
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 713580,
+      "componentType": 5125,
+      "count": 399,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 848784,
+      "componentType": 5126,
+      "count": 118,
+      "max": [
+        0.20384147763252258,
+        0.7979481220245361,
+        0.07100006192922592
+      ],
+      "min": [
+        0.16453270614147186,
+        0.746999979019165,
+        0.008000056259334087
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 850200,
+      "componentType": 5126,
+      "count": 118,
+      "max": [
+        0.9935980439186096,
+        0.7147728800773621,
+        0.5727463960647583
+      ],
+      "min": [
+        0.6077297925949097,
+        -0.06894394010305405,
+        -0.6649385690689087
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 715176,
+      "componentType": 5125,
+      "count": 333,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 851616,
+      "componentType": 5126,
+      "count": 669,
+      "max": [
+        0.10131833702325821,
+        0.9296875,
+        -0.04077146574854851
+      ],
+      "min": [
+        -0.1501464992761612,
+        0.57080078125,
+        -0.175048828125
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 859644,
+      "componentType": 5126,
+      "count": 669,
+      "max": [
+        1.0,
+        0.9997096061706543,
+        0.9943550825119019
+      ],
+      "min": [
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 716508,
+      "componentType": 5125,
+      "count": 3150,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 867672,
+      "componentType": 5126,
+      "count": 2473,
+      "max": [
+        0.1623535007238388,
+        0.935546875,
+        -0.0319824144244194
+      ],
+      "min": [
+        -0.1472168117761612,
+        0.5341796875,
+        -0.167724609375
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 897348,
+      "componentType": 5126,
+      "count": 2473,
+      "max": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min": [
+        -0.9998825192451477,
+        -0.9999730587005615,
+        -0.9999997615814209
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 729108,
+      "componentType": 5125,
+      "count": 13902,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 927024,
+      "componentType": 5126,
+      "count": 674,
+      "max": [
+        0.1457519382238388,
+        0.91943359375,
+        -0.03881837800145149
+      ],
+      "min": [
+        -0.1462402492761612,
+        0.62451171875,
+        -0.1594238132238388
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 935112,
+      "componentType": 5126,
+      "count": 674,
+      "max": [
+        0.9988764524459839,
+        0.9990348219871521,
+        0.9980987310409546
+      ],
+      "min": [
+        -0.9998734593391418,
+        -0.9700981378555298,
+        -0.9999614357948303
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 784716,
+      "componentType": 5125,
+      "count": 3393,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 943200,
+      "componentType": 5126,
+      "count": 488,
+      "max": [
+        0.1599120944738388,
+        0.9208984375,
+        -0.061279281973838806
+      ],
+      "min": [
+        -0.1496582180261612,
+        0.5810546875,
+        -0.175048828125
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 949056,
+      "componentType": 5126,
+      "count": 488,
+      "max": [
+        1.0,
+        1.0,
+        0.9116302132606506
+      ],
+      "min": [
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 798288,
+      "componentType": 5125,
+      "count": 2202,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 954912,
+      "componentType": 5126,
+      "count": 16,
+      "max": [
+        -0.1320800930261612,
+        0.701171875,
+        -0.07250974327325821
+      ],
+      "min": [
+        -0.1389160305261612,
+        0.69287109375,
+        -0.08959958702325821
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 955104,
+      "componentType": 5126,
+      "count": 16,
+      "max": [
+        -0.267341673374176,
+        0.9569893479347229,
+        0.9532781839370728
+      ],
+      "min": [
+        -0.9880273342132568,
+        -0.042229000478982925,
+        -0.9406446218490601
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 807096,
+      "componentType": 5125,
+      "count": 60,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 955296,
+      "componentType": 5126,
+      "count": 119,
+      "max": [
+        0.1345214694738388,
+        0.9140625,
+        -0.04467775300145149
+      ],
+      "min": [
+        -0.1486816555261612,
+        0.83203125,
+        -0.09643552452325821
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 956724,
+      "componentType": 5126,
+      "count": 119,
+      "max": [
+        0.9997593760490417,
+        0.9931259155273438,
+        0.9901916980743408
+      ],
+      "min": [
+        -0.9986806511878967,
+        -0.9691061973571777,
+        -0.9986131191253662
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 807336,
+      "componentType": 5125,
+      "count": 582,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 958152,
+      "componentType": 5126,
+      "count": 58,
+      "max": [
+        -0.0764160230755806,
+        0.93359375,
+        -0.0642089769244194
+      ],
+      "min": [
+        -0.0920410230755806,
+        0.92919921875,
+        -0.083251953125
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 958848,
+      "componentType": 5126,
+      "count": 58,
+      "max": [
+        0.8660669922828674,
+        1.0,
+        0.891501784324646
+      ],
+      "min": [
+        -0.8302057385444641,
+        0.29921016097068787,
+        -0.8293315172195435
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 809664,
+      "componentType": 5125,
+      "count": 300,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 959544,
+      "componentType": 5126,
+      "count": 162,
+      "max": [
+        0.1423339694738388,
+        0.9127060770988464,
+        -0.06274416297674179
+      ],
+      "min": [
+        -0.1384277492761612,
+        0.765625,
+        -0.1604004055261612
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 961488,
+      "componentType": 5126,
+      "count": 162,
+      "max": [
+        0.9982610940933228,
+        0.9660844206809998,
+        0.8814129829406738
+      ],
+      "min": [
+        -0.9774017930030823,
+        -0.9347513914108276,
+        -0.9999066591262817
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 810864,
+      "componentType": 5125,
+      "count": 726,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 963432,
+      "componentType": 5126,
+      "count": 86,
+      "max": [
+        0.03637693077325821,
+        0.8271484375,
+        -0.164306640625
+      ],
+      "min": [
+        -0.03588869422674179,
+        0.75537109375,
+        -0.174560546875
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 964464,
+      "componentType": 5126,
+      "count": 86,
+      "max": [
+        0.8913962841033936,
+        0.8867374062538147,
+        -0.4532247483730316
+      ],
+      "min": [
+        -0.8743205666542053,
+        -0.8837886452674866,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 813768,
+      "componentType": 5125,
+      "count": 432,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 965496,
+      "componentType": 5126,
+      "count": 28,
+      "max": [
+        0.1574706882238388,
+        0.72119140625,
+        -0.0729980543255806
+      ],
+      "min": [
+        0.1335449069738388,
+        0.70849609375,
+        -0.0983886793255806
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 965832,
+      "componentType": 5126,
+      "count": 28,
+      "max": [
+        0.9458401203155518,
+        0.9967417120933533,
+        0.993674099445343
+      ],
+      "min": [
+        0.06193748116493225,
+        -0.9958617091178894,
+        -0.9910677075386047
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 815496,
+      "componentType": 5125,
+      "count": 120,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "Jungle Jim (https://sketchfab.com/jungle_jim)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/astronaut-by-jungle-jim-c775a977606a4e4e990afe783c6bc845",
+      "title": "Astronaut by Jungle Jim"
+    },
+    "generator": "Sketchfab-0.18.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 815976,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 966168,
+      "byteOffset": 815976,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 1782144,
+      "uri": "scene.bin"
+    }
+  ],
+  "extensionsUsed": [
+    "KHR_materials_clearcoat",
+    "KHR_materials_emissive_strength"
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "04__Rubber_-_charcoal",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.010816399999999995,
+          0.013411700000000002,
+          0.014930599999999994,
+          1.0
+        ],
+        "metallicFactor": 0.4193760228467036,
+        "roughnessFactor": 0.5350850451054655
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "05__Harness_-_graphite_webbing",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.0300741,
+          0.0363065,
+          0.0396819,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.7116935527635758
+      }
+    },
+    {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatFactor": 1.0,
+          "clearcoatRoughnessFactor": 0.04
+        }
+      },
+      "name": "02__Shell_-_ivory_enamel",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.729347,
+          0.710566,
+          0.638283,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.8150267565495974
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "13__Gunmetal_fittings",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.0508761,
+          0.0637238,
+          0.0683849,
+          1.0
+        ],
+        "roughnessFactor": 0.26103736080839784
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "01__Suit_-_warm_white_woven_fabric",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.655931,
+          0.638283,
+          0.570482,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.7604131410830545
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "06__Hardware_-_brushed_silver",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.284647,
+          0.342392,
+          0.367246,
+          1.0
+        ],
+        "roughnessFactor": 0.27930720642820234
+      }
+    },
+    {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatFactor": 1.0,
+          "clearcoatRoughnessFactor": 0.04
+        }
+      },
+      "name": "03__Safety_orange",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.911407,
+          0.10653899999999994,
+          0.004400850000000001,
+          1.0
+        ],
+        "metallicFactor": 0.4680956111661823,
+        "roughnessFactor": 0.6751538615239667
+      }
+    },
+    {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatFactor": 1.0,
+          "clearcoatRoughnessFactor": 0.04
+        }
+      },
+      "name": "08__Displays_-_smoked_blue_glass",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.00542287,
+          0.0116454,
+          0.0173891,
+          1.0
+        ],
+        "roughnessFactor": 0.15141828708957075
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "07__Visor_-_reflective_gold",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.6559309999999998,
+          0.38005600000000006,
+          0.06838489999999997,
+          1.0
+        ],
+        "roughnessFactor": 0.12381642857320588
+      }
+    },
+    {
+      "doubleSided": true,
+      "emissiveFactor": [
+        0.78,
+        0.88,
+        1.0
+      ],
+      "extensions": {
+        "KHR_materials_emissive_strength": {
+          "emissiveStrength": 10.0
+        }
+      },
+      "name": "12__Helmet_lamps_-_cool_white",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.767769,
+          0.911407,
+          1.0,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.755397650670038
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "09__Badge_blue",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.00350102,
+          0.0300741,
+          0.13286800000000001,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.9932443620356969
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "10__Insignia_white",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.848088,
+          0.848088,
+          0.748414,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.823613103086648
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "11__Insignia_red",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.554222,
+          0.00350102,
+          0.00193498,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.9738824592140567
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "14__Recesses_-_near_black",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.00270898,
+          0.003254220000000001,
+          0.003671419999999998,
+          1.0
+        ],
+        "roughnessFactor": 0.0007084811034105286
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Astronaut | Original mesh - assigned materials_04 | Rubber - charcoal_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0
+          },
+          "indices": 2,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_05 | Harness - graphite webbing_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 4,
+            "POSITION": 3
+          },
+          "indices": 5,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_02 | Shell - ivory enamel_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 7,
+            "POSITION": 6
+          },
+          "indices": 8,
+          "material": 2,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_13 | Gunmetal fittings_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 10,
+            "POSITION": 9
+          },
+          "indices": 11,
+          "material": 3,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_01 | Suit - warm white woven fabric_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 13,
+            "POSITION": 12
+          },
+          "indices": 14,
+          "material": 4,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_06 | Hardware - brushed silver_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 16,
+            "POSITION": 15
+          },
+          "indices": 17,
+          "material": 5,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_03 | Safety orange_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 19,
+            "POSITION": 18
+          },
+          "indices": 20,
+          "material": 6,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_08 | Displays - smoked blue glass_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 22,
+            "POSITION": 21
+          },
+          "indices": 23,
+          "material": 7,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_07 | Visor - reflective gold_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 25,
+            "POSITION": 24
+          },
+          "indices": 26,
+          "material": 8,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_12 | Helmet lamps - cool white_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 28,
+            "POSITION": 27
+          },
+          "indices": 29,
+          "material": 9,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_09 | Badge blue_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 31,
+            "POSITION": 30
+          },
+          "indices": 32,
+          "material": 10,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_10 | Insignia white_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 34,
+            "POSITION": 33
+          },
+          "indices": 35,
+          "material": 11,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials_11 | Insignia red_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 37,
+            "POSITION": 36
+          },
+          "indices": 38,
+          "material": 12,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_13 | Gunmetal fittings_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 40,
+            "POSITION": 39
+          },
+          "indices": 41,
+          "material": 3,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_02 | Shell - ivory enamel_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 43,
+            "POSITION": 42
+          },
+          "indices": 44,
+          "material": 2,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_06 | Hardware - brushed silver_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 46,
+            "POSITION": 45
+          },
+          "indices": 47,
+          "material": 5,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_03 | Safety orange_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 49,
+            "POSITION": 48
+          },
+          "indices": 50,
+          "material": 6,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_04 | Rubber - charcoal_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 52,
+            "POSITION": 51
+          },
+          "indices": 53,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_11 | Insignia red_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 55,
+            "POSITION": 54
+          },
+          "indices": 56,
+          "material": 12,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_01 | Suit - warm white woven fabric_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 58,
+            "POSITION": 57
+          },
+          "indices": 59,
+          "material": 4,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_08 | Displays - smoked blue glass_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 61,
+            "POSITION": 60
+          },
+          "indices": 62,
+          "material": 7,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_14 | Recesses - near black_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 64,
+            "POSITION": 63
+          },
+          "indices": 65,
+          "material": 13,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Astronaut | Original mesh - assigned materials.002_05 | Harness - graphite webbing_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 67,
+            "POSITION": 66
+          },
+          "indices": 68,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.220446049250313e-16,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        2.220446049250313e-16,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        0.009999999776482582,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.009999999776482582,
+        0.0,
+        0.0,
+        -0.009999999776482582,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "5abe000878cf4a588fe1a39d1e9cc0fe.fbx"
+    },
+    {
+      "children": [
+        3,
+        17
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "matrix": [
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        99.99999999999972,
+        -7.5497901264043296e-06,
+        0.0,
+        0.0,
+        7.5497901264043296e-06,
+        99.99999999999972,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Astronaut | Original mesh - assigned materials"
+    },
+    {
+      "mesh": 0,
+      "name": "Astronaut | Original mesh - assigned materials_04 | Rubber - charcoal_0"
+    },
+    {
+      "mesh": 1,
+      "name": "Astronaut | Original mesh - assigned materials_05 | Harness - graphite webbing_0"
+    },
+    {
+      "mesh": 2,
+      "name": "Astronaut | Original mesh - assigned materials_02 | Shell - ivory enamel_0"
+    },
+    {
+      "mesh": 3,
+      "name": "Astronaut | Original mesh - assigned materials_13 | Gunmetal fittings_0"
+    },
+    {
+      "mesh": 4,
+      "name": "Astronaut | Original mesh - assigned materials_01 | Suit - warm white woven fabric_0"
+    },
+    {
+      "mesh": 5,
+      "name": "Astronaut | Original mesh - assigned materials_06 | Hardware - brushed silver_0"
+    },
+    {
+      "mesh": 6,
+      "name": "Astronaut | Original mesh - assigned materials_03 | Safety orange_0"
+    },
+    {
+      "mesh": 7,
+      "name": "Astronaut | Original mesh - assigned materials_08 | Displays - smoked blue glass_0"
+    },
+    {
+      "mesh": 8,
+      "name": "Astronaut | Original mesh - assigned materials_07 | Visor - reflective gold_0"
+    },
+    {
+      "mesh": 9,
+      "name": "Astronaut | Original mesh - assigned materials_12 | Helmet lamps - cool white_0"
+    },
+    {
+      "mesh": 10,
+      "name": "Astronaut | Original mesh - assigned materials_09 | Badge blue_0"
+    },
+    {
+      "mesh": 11,
+      "name": "Astronaut | Original mesh - assigned materials_10 | Insignia white_0"
+    },
+    {
+      "mesh": 12,
+      "name": "Astronaut | Original mesh - assigned materials_11 | Insignia red_0"
+    },
+    {
+      "children": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "matrix": [
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        99.99999999999972,
+        -7.5497901264043296e-06,
+        0.0,
+        0.0,
+        7.5497901264043296e-06,
+        99.99999999999972,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Astronaut | Original mesh - assigned materials.002"
+    },
+    {
+      "mesh": 13,
+      "name": "Astronaut | Original mesh - assigned materials.002_13 | Gunmetal fittings_0"
+    },
+    {
+      "mesh": 14,
+      "name": "Astronaut | Original mesh - assigned materials.002_02 | Shell - ivory enamel_0"
+    },
+    {
+      "mesh": 15,
+      "name": "Astronaut | Original mesh - assigned materials.002_06 | Hardware - brushed silver_0"
+    },
+    {
+      "mesh": 16,
+      "name": "Astronaut | Original mesh - assigned materials.002_03 | Safety orange_0"
+    },
+    {
+      "mesh": 17,
+      "name": "Astronaut | Original mesh - assigned materials.002_04 | Rubber - charcoal_0"
+    },
+    {
+      "mesh": 18,
+      "name": "Astronaut | Original mesh - assigned materials.002_11 | Insignia red_0"
+    },
+    {
+      "mesh": 19,
+      "name": "Astronaut | Original mesh - assigned materials.002_01 | Suit - warm white woven fabric_0"
+    },
+    {
+      "mesh": 20,
+      "name": "Astronaut | Original mesh - assigned materials.002_08 | Displays - smoked blue glass_0"
+    },
+    {
+      "mesh": 21,
+      "name": "Astronaut | Original mesh - assigned materials.002_14 | Recesses - near black_0"
+    },
+    {
+      "mesh": 22,
+      "name": "Astronaut | Original mesh - assigned materials.002_05 | Harness - graphite webbing_0"
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ]
+}
