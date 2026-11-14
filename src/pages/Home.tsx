@@ -960,6 +960,7 @@ export function Home() {
                 </div>
                 <div className="h-[300px] sm:h-[380px] md:h-[420px]">
                   <ThreeScene
+                    key={modelVariant}
                     onSelectBodyPart={handleBodySelect}
                     vitals={{
                       heartRate: currentValues['heart-rate'] ?? null,
