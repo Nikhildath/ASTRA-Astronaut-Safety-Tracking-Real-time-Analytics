@@ -17,6 +17,10 @@ import {
   saveReading,
   checkAndAwardBadges,
   isSupabaseConfigured,
+  subscribeToReadings,
+  subscribeToStats,
+  subscribeToProfile,
+  refreshAllData,
 } from '../lib/data-service';
 import type { ProfileData, StatsData } from '../lib/types';
 import { ThreeScene } from '../components/ThreeScene';
@@ -388,6 +392,7 @@ export function Home() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [selectedSystem, setSelectedSystem] = useState('neurological');
+  const [modelVariant, setModelVariant] = useState<string>('astronaut');
   const [profile, setProfile] = useState<ProfileData>({ id: '', player_name: 'Commander', player_role: 'Mission Specialist', callsign: 'AUSTRALIS-4' });
   const [stats, setStats] = useState<StatsData>({ id: '', player_id: '', total_xp: 0, total_checkins: 0, current_streak: 0, longest_streak: 0, last_checkin_date: undefined, unlocked_badges: [] });
   // Note: isLoading and isSyncing states are available for future UI enhancements
@@ -404,8 +409,6 @@ export function Home() {
         // Fallback to defaults
         setProfile({ id: '', player_name: 'Commander', player_role: 'Mission Specialist', callsign: 'AUSTRALIS-4' });
         setStats({ id: '', player_id: '', total_xp: 0, total_checkins: 0, current_streak: 0, longest_streak: 0, last_checkin_date: undefined, unlocked_badges: [] });
-      } finally {
-        // Data loaded successfully
       }
     }
     loadData();
@@ -439,6 +442,7 @@ export function Home() {
 
   // Load history from Supabase/localStorage whenever profile changes
   const [history, setHistory] = useState<Record<string, Reading[]>>({});
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   
   useEffect(() => {
     async function loadHistory() {
@@ -449,8 +453,36 @@ export function Home() {
         readings[ind.id] = indReadings;
       }
       setHistory(readings);
+      setLastRefreshed(new Date());
     }
     loadHistory();
+  }, [profile.id]);
+
+  // Subscribe to realtime updates when profile is available
+  useEffect(() => {
+    if (!profile.id) return;
+
+    // Realtime subscription for readings
+    const unsubReadings = subscribeToReadings(profile.id, (indicatorId, readings) => {
+      setHistory(prev => ({ ...prev, [indicatorId]: readings }));
+      setLastRefreshed(new Date());
+    });
+
+    // Realtime subscription for stats
+    const unsubStats = subscribeToStats(profile.id, (statsData) => {
+      setStats(statsData);
+    });
+
+    // Realtime subscription for profile
+    const unsubProfile = subscribeToProfile((profileData) => {
+      setProfile(profileData);
+    });
+
+    return () => {
+      unsubReadings();
+      unsubStats();
+      unsubProfile();
+    };
   }, [profile.id]);
 
   // Get current values from latest readings
@@ -617,6 +649,35 @@ export function Home() {
                   <span className="font-mono">SOL {mission.cycle.split(' ')[1]}</span>
                 </div>
               </div>
+              <button
+                onClick={async () => {
+                  if (!profile.id) return;
+                  try {
+                    const result = await refreshAllData(profile.id);
+                    setProfile(result.profile);
+                    setStats(result.stats);
+                    setHistory(result.readings);
+                    setLastRefreshed(new Date());
+                  } catch (err) {
+                    console.error('Refresh failed:', err);
+                  }
+                }}
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-mono border transition-colors hover:bg-cyan-950/50"
+                style={{
+                  borderColor: C.cyanBorder,
+                  color: C.cyanDim,
+                  background: 'rgba(13,19,34,0.5)',
+                }}
+                title="Refresh data from Supabase"
+              >
+                <Activity size={11} className="text-cyan-400" />
+                REFRESH
+                {lastRefreshed && (
+                  <span className="text-slate-600 ml-1">
+                    {lastRefreshed.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </span>
+                )}
+              </button>
 
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
@@ -1087,14 +1148,28 @@ export function Home() {
                     </div>
                     <Label text="CLICK BODY PARTS" color="cyan" glow />
                   </div>
+                  {/* Skin / model variant selector */}
+                  <div className="flex items-center gap-2 px-5 pb-3 border-b" style={{ borderColor: 'rgba(0,243,255,0.1)' }}>
+                    <Label text="SKIN" color="purple" />
+                    <select
+                      value={modelVariant}
+                      onChange={e => setModelVariant(e.target.value)}
+                      className="bg-obsidian border border-cyan-500/30 rounded px-2 py-1 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-400 appearance-none cursor-pointer"
+                    >
+                      <option value="astronaut">Astronaut Suit</option>
+                      <option value="rust_space_suit">Rust Space Suit</option>
+                      <option value="employee">Employee Model</option>
+                    </select>
+                  </div>
                   <div className="h-[380px] sm:h-[440px]">
                     <ThreeScene
-                    onSelectBodyPart={handleBodySelect}
-                    vitals={{
-                      heartRate: currentValues['heart-rate'] ?? null,
-                      spo2: currentValues['oxygen-sat'] ?? null,
-                    }}
-                  />
+                      modelVariant={modelVariant}
+                      onSelectBodyPart={handleBodySelect}
+                      vitals={{
+                        heartRate: currentValues['heart-rate'] ?? null,
+                        spo2: currentValues['oxygen-sat'] ?? null,
+                      }}
+                    />
                   </div>
                 </SciBox>
 

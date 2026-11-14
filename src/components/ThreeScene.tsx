@@ -11,6 +11,7 @@ type ThreeSceneProps = {
   className?: string;
   onSelectBodyPart?: (systemId: string) => void;
   vitals?: { heartRate: number | null; spo2: number | null };
+  modelVariant?: string;
 };
 
 const HOME_POSITION = new THREE.Vector3(0, 0.5, 2.65);
@@ -21,6 +22,25 @@ const heartGroup = new THREE.Group();
 const HOME_TARGET = new THREE.Vector3(0, 0.22, 0);
 const FOCUS_DISTANCE = 0.95;
 
+// Available body model variants
+export const MODEL_VARIANTS: Record<string, { label: string; url: string; height: number }> = {
+  astronaut: {
+    label: 'Astronaut Suit',
+    url: `${import.meta.env.BASE_URL}models/astronaut/scene.gltf`,
+    height: 1.45,
+  },
+  rust_space_suit: {
+    label: 'Rust Space Suit',
+    url: `${import.meta.env.BASE_URL}models/rust_space_suit/scene.gltf`,
+    height: 1.7,
+  },
+  employee: {
+    label: 'Employee Model',
+    url: `${import.meta.env.BASE_URL}models/employee/scene.gltf`,
+    height: 1.9,
+  },
+};
+
 // Normalised height (0 = feet, 1 = top of helmet) of the centre of each region.
 const SYSTEM_FOCUS_HEIGHT: Record<string, number> = {
   neurological: 0.92,
@@ -29,16 +49,22 @@ const SYSTEM_FOCUS_HEIGHT: Record<string, number> = {
   musculoskeletal: 0.24,
 };
 
-export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSceneProps) {
+export function ThreeScene({ className = '', onSelectBodyPart, vitals, modelVariant = 'astronaut' }: ThreeSceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const onSelectRef = useRef(onSelectBodyPart);
   const resetViewRef = useRef<(() => void) | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [heartOpen, setHeartOpen] = useState(false);
+  const currentVariantRef = useRef(modelVariant);
 
   useEffect(() => {
     onSelectRef.current = onSelectBodyPart;
   }, [onSelectBodyPart]);
+
+  // Track current variant for model reload
+  useEffect(() => {
+    currentVariantRef.current = modelVariant;
+  }, [modelVariant]);
 
   useEffect(() => {
     const el = mountRef.current;
@@ -86,17 +112,16 @@ export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSc
     rim.position.set(0, 1, -3);
     scene.add(rim);
 
-    // ── Astronaut (Astronaut by Jungle Jim, CC-BY-4.0) ─────
+    // ── Body model pivot ───────────────────────────────────
     const modelPivot = new THREE.Group();
     scene.add(modelPivot);
 
     const modelBounds = new THREE.Box3();
     let loadedModel: THREE.Object3D | null = null;
     let disposed = false;
-
-    // Suit materials are collected so the whole body can be ghosted when the
-    // cardiovascular region is opened, then restored on reset.
+    let currentModelUrl = MODEL_VARIANTS.astronaut.url;
     const suitMaterials: THREE.MeshStandardMaterial[] = [];
+
     const setSuitGhost = (ghost: boolean) => {
       suitMaterials.forEach(mat => {
         const original = mat.userData.original as
@@ -109,72 +134,101 @@ export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSc
       });
     };
 
-    const loader = new GLTFLoader();
-    loader.load(
-      `${import.meta.env.BASE_URL}models/astronaut/scene.gltf`,
-      (gltf) => {
-        if (disposed) {
-          disposeObject(gltf.scene);
-          return;
-        }
+    const loadModel = (variant: string) => {
+      const info = MODEL_VARIANTS[variant] ?? MODEL_VARIANTS.astronaut;
+      currentModelUrl = info.url;
+      setStatus('loading');
 
-        const model = gltf.scene;
+      // Remove previous model
+      if (loadedModel) {
+        modelPivot.remove(loadedModel);
+        disposeObject(loadedModel);
+        loadedModel = null;
+      }
+      suitMaterials.length = 0;
 
-        // Normalise the Sketchfab asset to a predictable height and put its
-        // feet on the floor ring so the camera framing stays consistent.
-        const initialBox = new THREE.Box3().setFromObject(model);
-        const initialSize = initialBox.getSize(new THREE.Vector3());
-        const scale = 1.45 / Math.max(initialSize.y, 0.001);
-        model.scale.setScalar(scale);
-        model.updateMatrixWorld(true);
-
-        const scaledBox = new THREE.Box3().setFromObject(model);
-        const center = scaledBox.getCenter(new THREE.Vector3());
-        model.position.set(-center.x, -scaledBox.min.y - 0.44, -center.z);
-        model.updateMatrixWorld(true);
-        modelBounds.setFromObject(model);
-
-        model.traverse(obj => {
-          if ((obj as THREE.Mesh).isMesh) {
-            const mesh = obj as THREE.Mesh;
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-            materials.forEach(mat => {
-              const m = mat as THREE.MeshStandardMaterial;
-              if ('envMapIntensity' in m) {
-                m.envMapIntensity = 1.15;
-              }
-              m.userData.original = {
-                opacity: m.opacity,
-                transparent: m.transparent,
-                depthWrite: m.depthWrite,
-              };
-              suitMaterials.push(m);
-            });
+      const loader = new GLTFLoader();
+      loader.load(
+        info.url,
+        (gltf) => {
+          if (disposed) {
+            disposeObject(gltf.scene);
+            return;
           }
-        });
 
-        // Place the heart hotspot on the chest (visible front of the suit).
-        const hCenter = modelBounds.getCenter(new THREE.Vector3());
-        const hHeight = Math.max(modelBounds.max.y - modelBounds.min.y, 0.001);
-        hotspot.position.set(
-          hCenter.x - 0.04,
-          modelBounds.min.y + hHeight * 0.72,
-          hCenter.z + 0.17,
-        );
-        hotspot.visible = true;
+          const model = gltf.scene;
 
-        modelPivot.add(model);
-        loadedModel = model;
-        setStatus('ready');
-      },
-      undefined,
-      (error) => {
-        console.error('Failed to load astronaut model', error);
-        if (!disposed) setStatus('error');
-      },
-    );
+          // Normalise the model to a predictable height and put its
+          // feet on the floor ring so the camera framing stays consistent.
+          const initialBox = new THREE.Box3().setFromObject(model);
+          const initialSize = initialBox.getSize(new THREE.Vector3());
+          const targetHeight = info.height;
+          const scale = targetHeight / Math.max(initialSize.y, 0.001);
+          model.scale.setScalar(scale);
+          model.updateMatrixWorld(true);
+
+          const scaledBox = new THREE.Box3().setFromObject(model);
+          const center = scaledBox.getCenter(new THREE.Vector3());
+          model.position.set(-center.x, -scaledBox.min.y - 0.44, -center.z);
+          model.updateMatrixWorld(true);
+          modelBounds.setFromObject(model);
+
+          model.traverse(obj => {
+            if ((obj as THREE.Mesh).isMesh) {
+              const mesh = obj as THREE.Mesh;
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
+              const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+              materials.forEach(mat => {
+                const m = mat as THREE.MeshStandardMaterial;
+                if ('envMapIntensity' in m) {
+                  m.envMapIntensity = 1.15;
+                }
+                m.userData.original = {
+                  opacity: m.opacity,
+                  transparent: m.transparent,
+                  depthWrite: m.depthWrite,
+                };
+                suitMaterials.push(m);
+              });
+            }
+          });
+
+          // Place the heart hotspot on the chest (visible front of the body).
+          const hCenter = modelBounds.getCenter(new THREE.Vector3());
+          const hHeight = Math.max(modelBounds.max.y - modelBounds.min.y, 0.001);
+          hotspot.position.set(
+            hCenter.x - 0.04,
+            modelBounds.min.y + hHeight * 0.72,
+            hCenter.z + 0.17,
+          );
+          hotspot.visible = true;
+
+          modelPivot.add(model);
+          loadedModel = model;
+          setStatus('ready');
+        },
+        undefined,
+        (error) => {
+          console.error(`Failed to load model variant "${variant}":`, error);
+          if (!disposed) setStatus('error');
+        },
+      );
+    };
+
+    // Initial model load
+    loadModel(modelVariant);
+
+    // Reload model when variant changes
+    const variantCheckInterval = setInterval(() => {
+      const currentVariant = currentVariantRef.current;
+      const info = MODEL_VARIANTS[currentVariant] ?? MODEL_VARIANTS.astronaut;
+      if (info.url !== currentModelUrl && !disposed) {
+        loadModel(currentVariant);
+      }
+    }, 200);
+
+    // Load heart model for cardiovascular cutaway using separate loader instance
 
     // Load heart model for cardiovascular cutaway using separate loader instance
     const heartLoader = new GLTFLoader();
@@ -598,6 +652,7 @@ export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSc
 
     return () => {
       disposed = true;
+      clearInterval(variantCheckInterval);
       ro.disconnect();
       cancelAnimationFrame(raf);
       viewTween?.kill();
@@ -721,7 +776,7 @@ export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSc
             <>
               <div className="w-7 h-7 rounded-full border-2 border-cyan-500/30 border-t-cyan-300 animate-spin" />
               <span className="text-[10px] font-mono tracking-widest" style={{ color: 'rgba(0,243,255,0.7)' }}>
-                LOADING ASTRONAUT MODEL…
+                LOADING {MODEL_VARIANTS[modelVariant]?.label ?? 'MODEL'}…
               </span>
             </>
           ) : (

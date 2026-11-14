@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Reading } from '../content'
+import { indicators } from '../content'
 
 export const isSupabaseConfigured: boolean = !!supabase
 
@@ -272,6 +273,160 @@ export function getAllLocalReadings(): Record<string, Reading[]> {
     }
   }
   return {}
+}
+
+// Realtime channel reference for readings updates
+export let readingsRealtimeChannel: any = null
+
+/**
+ * Subscribe to realtime updates for health readings.
+ * Calls `onReading` whenever a reading is inserted/updated/deleted for the given player.
+ */
+export function subscribeToReadings(
+  playerId: string,
+  onReading: (indicatorId: string, readings: Reading[]) => void
+): () => void {
+  if (!isSupabaseConfigured || !supabase) return () => {}
+
+  // Cleanup existing channel if any
+  if (readingsRealtimeChannel) {
+    readingsRealtimeChannel.unsubscribe()
+  }
+
+  const channel = supabase
+    .channel(`readings:${playerId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'health_readings',
+        filter: `player_id=eq.${playerId}`,
+      },
+      async (payload: { new?: { indicator_id?: string }, old?: { indicator_id?: string } }) => {
+        // Re-fetch readings for the affected indicator
+        const indicatorId =
+          payload.new?.indicator_id ?? payload.old?.indicator_id ?? ''
+        if (indicatorId) {
+          const updated = await getReadings(playerId, indicatorId)
+          onReading(indicatorId, updated)
+        } else {
+          // Fallback: refresh all indicators
+          for (const ind of indicators) {
+            const updated = await getReadings(playerId, ind.id)
+            onReading(ind.id, updated)
+          }
+        }
+      }
+    )
+    .subscribe()
+
+  readingsRealtimeChannel = channel
+
+  return () => {
+    channel.unsubscribe()
+    readingsRealtimeChannel = null
+  }
+}
+
+// Stored reference for stats channel
+export let statsRealtimeChannel: any = null
+
+/**
+ * Subscribe to realtime updates for player stats.
+ */
+export function subscribeToStats(
+  playerId: string,
+  onStats: (stats: StatsData) => void
+): () => void {
+  if (!isSupabaseConfigured || !supabase) return () => {}
+
+  if (statsRealtimeChannel) {
+    statsRealtimeChannel.unsubscribe()
+  }
+
+  const channel = supabase
+    .channel(`stats:${playerId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'player_stats',
+        filter: `player_id=eq.${playerId}`,
+      },
+      async () => {
+        const stats = await getStats(playerId)
+        onStats(stats)
+      }
+    )
+    .subscribe()
+
+  statsRealtimeChannel = channel
+
+  return () => {
+    channel.unsubscribe()
+    statsRealtimeChannel = null
+  }
+}
+
+// Stored reference for profile channel
+export let profileRealtimeChannel: any = null
+
+/**
+ * Subscribe to realtime updates for profile.
+ */
+export function subscribeToProfile(
+  onProfile: (profile: ProfileData) => void
+): () => void {
+  if (!isSupabaseConfigured || !supabase) return () => {}
+
+  if (profileRealtimeChannel) {
+    profileRealtimeChannel.unsubscribe()
+  }
+
+  const channel = supabase
+    .channel('profiles')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'profiles',
+      },
+      async () => {
+        const profile = await getProfile()
+        onProfile(profile)
+      }
+    )
+    .subscribe()
+
+  profileRealtimeChannel = channel
+
+  return () => {
+    channel.unsubscribe()
+    profileRealtimeChannel = null
+  }
+}
+
+/**
+ * Manually refresh all data from Supabase (bypass cache).
+ * Useful when user knows data was changed externally.
+ */
+export async function refreshAllData(playerId: string): Promise<{
+  profile: ProfileData
+  stats: StatsData
+  readings: Record<string, Reading[]>
+}> {
+  const profile = await getProfile()
+  const stats = await getStats(playerId)
+  const readings: Record<string, Reading[]> = {}
+
+  for (const ind of indicators) {
+    readings[ind.id] = await getReadings(playerId, ind.id)
+  }
+
+  return { profile, stats, readings }
 }
 
 // Save a single reading
