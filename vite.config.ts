@@ -37,7 +37,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25MB for large 3D model binaries (dragon scene.bin is ~15MB)
+        maximumFileSizeToCacheInBytes: 50 * 1024 * 1024, // 50MB - accommodate all model textures including dragon (>400MB total)
         globPatterns: ['**/*.{js,css,html,svg,png,ico,gltf,bin,jpeg,jpg}'],
         runtimeCaching: [
           {

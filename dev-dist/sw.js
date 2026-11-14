@@ -81,7 +81,7 @@ define(['./workbox-63ab604a'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "index.html",
-    "revision": "0.qoi4eoklj9"
+    "revision": "0.kafkhke4qbk"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
@@ -95,6 +95,13 @@ define(['./workbox-63ab604a'], (function (workbox) { 'use strict';
     "cacheName": "3d-models",
     plugins: [new workbox.ExpirationPlugin({
       maxEntries: 20,
+      maxAgeSeconds: 2592000
+    })]
+  }), 'GET');
+  workbox.registerRoute(/^\/models\/.*\/textures\/.*\.(png|jpeg|jpg)$/, new workbox.CacheFirst({
+    "cacheName": "model-textures",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 100,
       maxAgeSeconds: 2592000
     })]
   }), 'GET');
