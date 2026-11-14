@@ -248,17 +248,23 @@ export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSc
       },
     );
 
-    // Floating particles
+    // Floating particles - deterministic orbital positions
+    // Particles orbit in specific bands around the astronaut
     const pCount = 200;
     const pg = new THREE.BufferGeometry();
     const pp = new Float32Array(pCount * 3);
+    const particleRadii = new Float32Array(pCount);
     for (let i = 0; i < pCount; i++) {
-      const r = 1.5 + Math.random() * 3;
-      const th = Math.random() * Math.PI * 2;
-      const ph = Math.acos(2 * Math.random() - 1);
-      pp[i * 3] = r * Math.sin(ph) * Math.cos(th);
-      pp[i * 3 + 1] = r * Math.cos(ph) * 0.5;
-      pp[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
+      // Distribute particles in orbital rings at different heights
+      const ringIndex = i % 4;
+      const baseR = 1.8 + ringIndex * 0.6;
+      const angleOffset = (i / pCount) * Math.PI * 2 + ringIndex * 1.5;
+      const heightOffset = (ringIndex - 1.5) * 0.4;
+      
+      particleRadii[i] = baseR;
+      pp[i * 3] = baseR * Math.cos(angleOffset);
+      pp[i * 3 + 1] = heightOffset + Math.sin(angleOffset * 0.5) * 0.2;
+      pp[i * 3 + 2] = baseR * Math.sin(angleOffset);
     }
     pg.setAttribute('position', new THREE.BufferAttribute(pp, 3));
     const pm = new THREE.PointsMaterial({
@@ -269,14 +275,29 @@ export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSc
     particles.name = 'particles';
     scene.add(particles);
 
-    // Starfield
+    // Starfield - deterministic positions based on golden angle distribution
+    // This creates a realistic, uniform star distribution without randomness
     const starCount = 600;
     const sg = new THREE.BufferGeometry();
     const sp = new Float32Array(starCount * 3);
+    const goldenRatio = (1 + Math.sqrt(5)) / 2;
+    const goldenAngle = 2 * Math.PI * (1 - 1 / goldenRatio);
+    // Realistic star magnitude distribution (more dim stars than bright ones)
+    const magnitudes = new Float32Array(starCount);
     for (let i = 0; i < starCount; i++) {
-      sp[i * 3] = (Math.random() - 0.5) * 30;
-      sp[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      sp[i * 3 + 2] = -5 - Math.random() * 20;
+      // Fibonacci sphere distribution for uniform coverage
+      const y = 1 - (i / (starCount - 1)) * 2;
+      const radius = Math.sqrt(1 - y * y);
+      const theta = goldenAngle * i;
+      
+      // Scale to scene dimensions with realistic depth
+      const depthScale = 8 + (i % 5) * 2; // Vary depth in layers
+      sp[i * 3] = Math.cos(theta) * radius * 15;
+      sp[i * 3 + 1] = y * 10;
+      sp[i * 3 + 2] = -(5 + (i * 7) % 20 + depthScale * 0.5);
+      
+      // Store magnitude for varying brightness (simulated)
+      magnitudes[i] = 0.3 + (i % 10) * 0.07;
     }
     sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
     const sm = new THREE.PointsMaterial({
@@ -611,10 +632,11 @@ export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSc
 
   const heartRate = vitals?.heartRate ?? null;
   const spo2 = vitals?.spo2 ?? null;
-  const isSimulated = heartRate == null || spo2 == null;
-  const hrDisplay = heartRate ?? 72;
-  const spo2Display = spo2 ?? 98;
+  // Default values for display when no data is available (will show as '--' visually)
+  const hrDisplay = heartRate ?? 0;
+  const spo2Display = spo2 ?? 0;
   const pulseDisplay = Math.round(hrDisplay);
+  const hasVitals = heartRate != null && spo2 != null;
 
   return (
     <div
@@ -643,7 +665,7 @@ export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSc
             ⟲ RESET VIEW
           </button>
 
-          {heartOpen && (
+                        {heartOpen && (
             <div
               className="absolute top-2 left-2 rounded-lg border px-3 py-2.5 font-mono"
               style={{
@@ -655,26 +677,26 @@ export function ThreeScene({ className = '', onSelectBodyPart, vitals }: ThreeSc
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                 <span className="text-[9px] tracking-widest" style={{ color: '#f87171' }}>
-                  CARDIOVASCULAR // {isSimulated ? 'SIM TELEMETRY' : 'LIVE'}
+                  CARDIOVASCULAR // {hasVitals ? 'TELEMETRY ACTIVE' : 'NO TELEMETRY'}
                 </span>
               </div>
               <div className="mt-2 flex items-end gap-4">
                 <div>
                   <div className="text-[9px] tracking-widest" style={{ color: '#94a3b8' }}>HEART RATE</div>
-                  <div className="text-lg font-bold leading-none" style={{ color: '#f87171' }}>
-                    {Math.round(hrDisplay)}<span className="text-[9px] ml-1">BPM</span>
+                  <div className="text-lg font-bold leading-none" style={{ color: hasVitals ? '#f87171' : '#64748b' }}>
+                    {hasVitals ? Math.round(hrDisplay) : '--'}<span className="text-[9px] ml-1">BPM</span>
                   </div>
                 </div>
                 <div>
                   <div className="text-[9px] tracking-widest" style={{ color: '#94a3b8' }}>PULSE</div>
-                  <div className="text-lg font-bold leading-none" style={{ color: '#fca5a5' }}>
-                    {pulseDisplay}<span className="text-[9px] ml-1">BPM</span>
+                  <div className="text-lg font-bold leading-none" style={{ color: hasVitals ? '#fca5a5' : '#64748b' }}>
+                    {hasVitals ? pulseDisplay : '--'}<span className="text-[9px] ml-1">BPM</span>
                   </div>
                 </div>
                 <div>
                   <div className="text-[9px] tracking-widest" style={{ color: '#94a3b8' }}>SpO₂</div>
-                  <div className="text-lg font-bold leading-none" style={{ color: '#22d3ee' }}>
-                    {Math.round(spo2Display)}<span className="text-[9px] ml-1">%</span>
+                  <div className="text-lg font-bold leading-none" style={{ color: hasVitals ? '#22d3ee' : '#64748b' }}>
+                    {hasVitals ? Math.round(spo2Display) : '--'}<span className="text-[9px] ml-1">%</span>
                   </div>
                 </div>
               </div>

@@ -1,12 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Globe, Activity, AlertTriangle, Check, Plus, Clock,
   Star, Zap, ChevronRight, Settings, HelpCircle, Award,
   Wifi, Shield,
 } from 'lucide-react';
+import { faHeart, faLungs, faDroplet, faThermometerHalf, faMoon, faFaceSmile, faWater, faFlask, faBrain, faBone, faShieldHalved, faSun, faGlobe, faHouse, faQuestionCircle, faBan, faLock, faMedal } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  initializePlayer,
+  saveProfile,
+  saveStats,
+  getReadings,
+  saveReading,
+  checkAndAwardBadges,
+  isSupabaseConfigured,
+} from '../lib/data-service';
+import type { ProfileData, StatsData } from '../lib/types';
 import { ThreeScene } from '../components/ThreeScene';
 import {
   indicators, actionLibrary, bodySystems, mission, hazards,
@@ -43,33 +55,7 @@ type ViewMode = 'dashboard' | 'body' | 'actions' | 'education' | 'profile';
 type EducationTab = 'indicators' | 'hazards' | 'glossary' | 'exercise' | 'nutrition';
 type BodySystem = typeof bodySystems[number];
 
-interface AppState {
-  readings: Record<string, Reading | null>;
-  history: Record<string, Reading[]>;
-  streak: number;
-  totalCheckins: number;
-  totalXp: number;
-  unlockedBadges: string[];
-}
-
 /* ─── Helpers ────────────────────────────────────────────── */
-
-function genHistory(id: string): Reading[] {
-  const now = Date.now();
-  const base = indicators.find(i => i.id === id);
-  if (!base) return [];
-  const [lo, hi] = base.normalRange;
-  const mid = (lo + hi) / 2;
-  return Array.from({ length: 14 }, (_, i) => ({
-    indicatorId: id,
-    value: mid + (Math.random() - 0.5) * (hi - lo) * 0.25,
-    timestamp: now - (i + 1) * 86400000,
-  }));
-}
-
-function allLogged(r: Record<string, Reading | null>): boolean {
-  return indicators.every(k => r[k.id] !== null && r[k.id] !== undefined);
-}
 
 function inRange(value: number, range: number[]): boolean {
   return value >= Math.min(...range) && value <= Math.max(...range);
@@ -81,17 +67,17 @@ function getStatus(val: number, ind: typeof indicators[number]): 'healthy' | 'ca
   return 'caution';
 }
 
-function getIndIcon(id: string): string {
+function getIndIcon(id: string) {
   switch (id) {
-    case 'heart-rate': return '❤️';
-    case 'blood-pressure': return '🫀';
-    case 'blood-sugar': return '🩸';
-    case 'body-temp': return '🌡️';
-    case 'sleep-hours': return '😴';
-    case 'mood': return '😊';
-    case 'oxygen-sat': return '🫁';
-    case 'hydration': return '💧';
-    default: return '🔬';
+    case 'heart-rate': return faHeart;
+    case 'blood-pressure': return faHeart;
+    case 'blood-sugar': return faDroplet;
+    case 'body-temp': return faThermometerHalf;
+    case 'sleep-hours': return faMoon;
+    case 'mood': return faFaceSmile;
+    case 'oxygen-sat': return faLungs;
+    case 'hydration': return faWater;
+    default: return faFlask;
   }
 }
 
@@ -243,7 +229,7 @@ function SystemDetailPanel({
             className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
             style={{ background: `${system.color}1a`, color: system.color, border: `1px solid ${system.color}55` }}
           >
-            {getEmoji(system.id)}
+            <FontAwesomeIcon icon={getEmoji(system.id)} size="xl" style={{ color: system.color }} />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -274,7 +260,10 @@ function SystemDetailPanel({
               className="text-[10px] px-2 py-1 rounded font-mono transition-colors hover:bg-red-500/20"
               style={{ background: 'rgba(239,68,68,0.08)', color: C.red, border: '1px solid rgba(239,68,68,0.25)' }}
             >
-              {hazardLabel(h)}
+              <span className="flex items-center gap-1">
+                <HazardIcon id={h} />
+                {hazardLabel(h)}
+              </span>
             </button>
           ))}
         </div>
@@ -303,7 +292,7 @@ function SystemDetailPanel({
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-base shrink-0">{getIndIcon(ind.id)}</span>
+                    <FontAwesomeIcon icon={getIndIcon(ind.id)} size="lg" style={{ color }} />
                     <span className="text-xs font-medium truncate">{ind.name}</span>
                     <StatusBadge status={status} />
                   </div>
@@ -399,58 +388,79 @@ export function Home() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [selectedSystem, setSelectedSystem] = useState('neurological');
-  const [state, setState] = useState<AppState>(() => {
-    const history: Record<string, Reading[]> = {};
-    indicators.forEach(ind => { history[ind.id] = genHistory(ind.id); });
-    return {
-      readings: {},
-      history,
-      streak: 3,
-      totalCheckins: 14,
-      totalXp: 345,
-      unlockedBadges: ['first-log', 'week-streak'],
-    };
-  });
-  const [level, setLevel] = useState(14);
-  const [xp, setXp] = useState(345);
-  const [maxXp, setMaxXp] = useState(500);
+  const [profile, setProfile] = useState<ProfileData>({ id: '', player_name: 'Commander', player_role: 'Mission Specialist', callsign: 'AUSTRALIS-4' });
+  const [stats, setStats] = useState<StatsData>({ id: '', player_id: '', total_xp: 0, total_checkins: 0, current_streak: 0, longest_streak: 0, last_checkin_date: undefined, unlocked_badges: [] });
+  // Note: isLoading and isSyncing states are available for future UI enhancements
+
+  // Load data from Supabase/localStorage on mount
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const result = await initializePlayer();
+        setProfile(result.profile);
+        setStats(result.stats);
+      } catch (err) {
+        console.error('Failed to load player data:', err);
+        // Fallback to defaults
+        setProfile({ id: '', player_name: 'Commander', player_role: 'Mission Specialist', callsign: 'AUSTRALIS-4' });
+        setStats({ id: '', player_id: '', total_xp: 0, total_checkins: 0, current_streak: 0, longest_streak: 0, last_checkin_date: undefined, unlocked_badges: [] });
+      } finally {
+        // Data loaded successfully
+      }
+    }
+    loadData();
+  }, []);
+
+  // Sync data when stats change
+  useEffect(() => {
+    if (stats.player_id && stats.id) {
+      saveStats(stats).catch(console.error);
+    }
+  }, [stats]);
+
+  // Sync profile when it changes
+  useEffect(() => {
+    if (profile.id) {
+      saveProfile(profile).catch(console.error);
+    }
+  }, [profile]);
+  const currentLevel = gamification.levels.find(l => stats.total_xp < l.xpRequired) || gamification.levels[gamification.levels.length - 1];
+  const prevLevel = gamification.levels[Math.max(0, gamification.levels.indexOf(currentLevel) - 1)];
+  const xpInLevel = prevLevel ? stats.total_xp - prevLevel.xpRequired : stats.total_xp;
+  const xpForNext = currentLevel.xpRequired - (prevLevel?.xpRequired || 0);
+  const progressPct = Math.min(100, (xpInLevel / Math.max(1, xpForNext)) * 100);
+  const level = currentLevel.level;
+  const xp = stats.total_xp;
+  const maxXp = currentLevel.xpRequired;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [view]);
 
-  const handleSave = (id: string, val: number, _notes?: string) => {
-    const reading: Reading = { indicatorId: id, value: val, timestamp: Date.now() };
-    const gained = allLogged({ ...state.readings, [id]: reading }) ? 25 : 10;
-    setState(prev => {
-      const nr = { ...prev.readings, [id]: reading };
-      const nh = { ...prev.history, [id]: [reading, ...(prev.history[id]?.slice(0, 69) || [])] };
-      return {
-        ...prev,
-        readings: nr,
-        history: nh,
-        totalXp: prev.totalXp + gained,
-        totalCheckins: prev.totalCheckins + 1,
-        unlockedBadges: prev.unlockedBadges.includes('first-log')
-          ? prev.unlockedBadges
-          : [...prev.unlockedBadges, 'first-log'],
-      };
-    });
-    setXp(prev => {
-      const next = prev + gained;
-      if (next >= maxXp) {
-        setLevel(l => l + 1);
-        setMaxXp(m => m + 100);
-        return next - maxXp;
+  // Load history from Supabase/localStorage whenever profile changes
+  const [history, setHistory] = useState<Record<string, Reading[]>>({});
+  
+  useEffect(() => {
+    async function loadHistory() {
+      if (!profile.id) return;
+      const readings: Record<string, Reading[]> = {};
+      for (const ind of indicators) {
+        const indReadings = await getReadings(profile.id, ind.id);
+        readings[ind.id] = indReadings;
       }
-      return next;
-    });
-  };
+      setHistory(readings);
+    }
+    loadHistory();
+  }, [profile.id]);
 
+  // Get current values from latest readings
   const currentValues: Record<string, number | null> = {};
-  indicators.forEach(ind => { currentValues[ind.id] = state.readings[ind.id] ? state.readings[ind.id]!.value : null; });
+  indicators.forEach(ind => {
+    const readingsForInd = history[ind.id] || [];
+    currentValues[ind.id] = readingsForInd.length > 0 ? readingsForInd[0].value : null;
+  });
 
-  // Calculate stats
+  // Calculate stats from current readings
   let critical = 0, caution = 0, healthy = 0;
   const indMap = new Map(indicators.map(i => [i.id, i]));
   for (const [id, v] of Object.entries(currentValues)) {
@@ -465,28 +475,77 @@ export function Home() {
 
   const activeSystem = bodySystems.find(s => s.id === selectedSystem) ?? bodySystems[0];
 
-  const handleBodySelect = (id: string) => {
+  const handleBodySelect = useCallback((id: string) => {
     setSelectedSystem(id);
-  };
+  }, []);
 
-  const handleOpenHazard = () => {
+  const handleOpenHazard = useCallback(() => {
     setEducationTab('hazards');
     setView('education');
-  };
+  }, []);
 
-  const handleOpenActions = () => {
+  const handleOpenActions = useCallback(() => {
     setView('actions');
-  };
+  }, []);
 
-  const onStartEdit = (id: string, val: number | null) => {
+  const onStartEdit = useCallback((id: string, val: number | null) => {
     setEditingId(id);
     setDraft(val !== null ? String(val) : '');
-  };
+  }, []);
 
-  const onCancelEdit = () => {
+  const onCancelEdit = useCallback(() => {
     setEditingId(null);
     setDraft('');
-  };
+  }, []);
+
+  // Save a reading and update stats
+  const handleSave = useCallback(async (id: string, val: number, notes?: string) => {
+    if (!profile.id) return;
+    
+    const reading: Reading = { indicatorId: id, value: val, timestamp: Date.now(), notes };
+    
+    // Save to Supabase/localStorage
+    await saveReading(profile.id, reading);
+    
+    // Reload history for this indicator
+    const newReadings = await getReadings(profile.id, id);
+    setHistory(prev => ({ ...prev, [id]: newReadings }));
+    
+    // Check if all indicators are logged
+    const allLoggedNow = indicators.every(ind => {
+      const indHistory = history[ind.id] || [];
+      return indHistory.length > 0;
+    });
+    
+    // Update stats
+    setStats(prev => {
+      const today = getTodayDate();
+      const wasSameDay = prev.last_checkin_date === today;
+      const newStreak = wasSameDay ? prev.current_streak : 1;
+      const newLongestStreak = Math.max(prev.longest_streak, newStreak);
+      const newTotalXp = prev.total_xp + (allLoggedNow ? 25 : 10);
+      const newTotalCheckins = prev.total_checkins + 1;
+      
+      const newBadges = checkAndAwardBadges({
+        ...prev,
+        total_xp: newTotalXp,
+        total_checkins: newTotalCheckins,
+        current_streak: newStreak,
+        longest_streak: newLongestStreak,
+        last_checkin_date: today,
+      }, allLoggedNow);
+      
+      return {
+        ...prev,
+        total_xp: newTotalXp,
+        total_checkins: newTotalCheckins,
+        current_streak: newStreak,
+        longest_streak: newLongestStreak,
+        last_checkin_date: today,
+        unlocked_badges: newBadges,
+      };
+    });
+  }, [profile.id, history, currentValues]);
 
   return (
     <div className="min-h-screen bg-void text-slate-100 font-sans overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -566,8 +625,8 @@ export function Home() {
                   className="px-2.5 py-1 bg-panel hover:bg-cyan-950/50 border transition rounded text-xs font-mono hidden sm:flex items-center gap-1.5"
                   style={{ borderColor: C.cyanBorder, color: C.cyanDim }}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  ONLINE
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                  {isSupabaseConfigured ? 'CLOUD' : 'LOCAL'}
                 </button>
               </div>
 
@@ -608,15 +667,15 @@ export function Home() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-cyan-950 border flex items-center justify-center" style={{ borderColor: C.cyan }}>
-                  <span className="font-orbitron font-black text-sm" style={{ color: C.cyan }}>{level}</span>
+                  <span className="font-orbitron font-black text-sm" style={{ color: currentLevel.color }}>{level}</span>
                 </div>
                 <div>
-                  <div className="text-xs font-bold" style={{ color: C.text }}>Orbit Hunter</div>
-                  <div className="text-[10px] font-mono" style={{ color: C.textMuted }}>Lv.{level}</div>
+                  <div className="text-xs font-bold" style={{ color: C.text }}>{profile.player_role}</div>
+                  <div className="text-[10px] font-mono" style={{ color: C.textMuted }}>{currentLevel.name}</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-orbitron text-sm font-bold" style={{ color: C.cyan }}>{xp}</div>
+                <div className="font-orbitron text-sm font-bold" style={{ color: currentLevel.color }}>{stats.total_xp}</div>
                 <div className="text-[10px] font-mono" style={{ color: C.textMuted }}>XP</div>
               </div>
             </div>
@@ -625,13 +684,13 @@ export function Home() {
             <div className="mt-2">
               <div className="flex justify-between text-[10px] font-mono mb-1" style={{ color: C.textMuted }}>
                 <span>EXPERIENCE</span>
-                <span style={{ color: C.cyan }}>{xp} / {maxXp}</span>
+                <span style={{ color: currentLevel.color }}>{stats.total_xp} / {maxXp}</span>
               </div>
               <div className="w-full bg-obsidian rounded-full h-1.5 overflow-hidden border" style={{ borderColor: C.cyanBorder }}>
-                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(xp / maxXp) * 100}%`, background: 'linear-gradient(90deg, #00f3ff, #a855f7)' }} />
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${gamification.levels[Math.min(gamification.levels.length - 1, gamification.levels.indexOf(currentLevel) + 1)]?.color || '#a855f7'})` }} />
               </div>
               <div className="text-[10px] font-mono mt-1" style={{ color: C.textMuted }}>
-                Next rank: Vanguard Monarch
+                Next rank: {gamification.levels[Math.min(gamification.levels.length - 1, gamification.levels.indexOf(currentLevel) + 1)]?.name || 'MAX LEVEL'}
               </div>
             </div>
 
@@ -641,22 +700,18 @@ export function Home() {
             <div>
               <Label text="VITAL STATS" color="cyan" />
               <div className="mt-2 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono" style={{ color: C.textDim }}>Fatigue Index</span>
-                  <span className="font-orbitron text-xs font-bold" style={{ color: C.green }}>LOW (12%)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono" style={{ color: C.textDim }}>Bone Density</span>
-                  <span className="font-orbitron text-xs font-bold" style={{ color: C.cyan }}>98.4% NOMINAL</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono" style={{ color: C.textDim }}>Hydration</span>
-                  <span className="font-orbitron text-xs font-bold" style={{ color: C.cyan }}>3.8 L / DAY</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono" style={{ color: C.textDim }}>Stress Resistance</span>
-                  <span className="font-orbitron text-xs font-bold" style={{ color: C.purple }}>RANK S</span>
-                </div>
+                {indicators.slice(0, 4).map(ind => {
+                  const val = currentValues[ind.id];
+                  const status = val !== null ? getStatus(val, ind) : 'muted';
+                  const statusColor = status === 'healthy' ? C.green : status === 'caution' ? '#fbbf24' : status === 'critical' ? C.red : C.textMuted;
+                  const displayVal = val !== null ? (ind.format ? ind.format(val) : `${val}${ind.unit !== '/10' && ind.unit !== '% SpO2' ? ` ${ind.unit}` : ''}`) : 'No data';
+                  return (
+                    <div key={ind.id} className="flex items-center justify-between">
+                      <span className="text-xs font-mono" style={{ color: C.textDim }}>{ind.name}</span>
+                      <span className="font-orbitron text-xs font-bold" style={{ color: statusColor }}>{displayVal}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -669,12 +724,12 @@ export function Home() {
                 {['1', '2', '3', '4'].map((n, i) => (
                   <div
                     key={n}
-                    className={`h-1.5 rounded flex-1 transition-all ${i < Math.min(2, state.totalCheckins) ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,243,255,0.6)]' : 'bg-obsidian border'}`}
-                    style={i < Math.min(2, state.totalCheckins) ? {} : { borderColor: C.cyanBorder }}
+                                         className={`h-1.5 rounded flex-1 transition-all ${i < Math.min(2, stats.total_checkins) ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,243,255,0.6)]' : 'bg-obsidian border'}`}
+                     style={i < Math.min(2, stats.total_checkins) ? {} : { borderColor: C.cyanBorder }}
                   />
                 ))}
-                <span className="text-[10px] font-mono ml-2 shrink-0" style={{ color: C.cyan }}>
-                  {Math.min(2, state.totalCheckins)} / 4 CLEARED
+                                  <span className="text-[10px] font-mono ml-2 shrink-0" style={{ color: C.cyan }}>
+                  {Math.min(4, stats.total_checkins)} / 4 CLEARED
                 </span>
               </div>
             </div>
@@ -709,11 +764,11 @@ export function Home() {
             {/* Profile avatar */}
             <div className="flex items-center gap-2 pt-1">
               <div className="w-8 h-8 rounded bg-cyan-950 border flex items-center justify-center text-cyan-400 font-orbitron font-bold text-sm" style={{ borderColor: C.cyan }}>
-                ND
+                {profile.player_name.charAt(0).toUpperCase()}{profile.player_role.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold truncate" style={{ color: C.text }}>Nikhil Dath</p>
-                <p className="text-[10px] font-mono truncate" style={{ color: C.textMuted }}>Deep-Space Commander</p>
+                <p className="text-xs font-bold truncate" style={{ color: C.text }}>{profile.player_name}</p>
+                <p className="text-[10px] font-mono truncate" style={{ color: C.textMuted }}>{profile.callsign || 'N/A'}</p>
               </div>
             </div>
           </SciBox>
@@ -737,7 +792,7 @@ export function Home() {
               </div>
               <XenText size="2xl" glowColor="cyan">THE SYSTEM IS ONLINE.</XenText>
               <p className="text-xs mt-1" style={{ color: C.cyanDim }}>
-                Welcome back, Commander Nikhil Dath. Your orbital evolution continues with unwavering discipline.
+                Welcome back, {profile.player_name}. Mission {profile.callsign || 'ACTIVE'} continues.
               </p>
             </div>
             <div className="flex items-center gap-3 bg-cyan-950/60 border px-4 py-3 rounded shrink-0" style={{ borderColor: C.cyanBorder }}>
@@ -784,11 +839,11 @@ export function Home() {
                   <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r pb-4 lg:pb-0 lg:pr-6" style={{ borderColor: C.cyanBorder }}>
                     <Label text="LEVEL" color="cyan" />
                     <div className="flex items-baseline gap-3 mt-1">
-                      <span className="font-orbitron font-black text-5xl md:text-6xl tracking-wider" style={{ color: C.text, textShadow: '0 0 20px rgba(0,243,255,0.5)' }}>
+                      <span className="font-orbitron font-black text-5xl md:text-6xl tracking-wider" style={{ color: currentLevel.color, textShadow: `0 0 20px ${currentLevel.color}60` }}>
                         {level}
                       </span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(0,243,255,0.08)', color: C.cyan, border: '1px solid rgba(0,243,255,0.2)' }}>
-                        ORBIT HUNTER
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(0,243,255,0.08)', color: currentLevel.color, border: `1px solid ${currentLevel.color}40` }}>
+                        {currentLevel.name}
                       </span>
                     </div>
                     <div className="mt-4">
@@ -797,30 +852,31 @@ export function Home() {
                         <span style={{ color: C.cyan }}>{xp} / {maxXp} XP</span>
                       </div>
                       <div className="w-full bg-obsidian rounded-full h-2 overflow-hidden border" style={{ borderColor: C.cyanBorder }}>
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(xp / maxXp) * 100}%`, background: 'linear-gradient(90deg, #00f3ff 0%, #a855f7 50%, #ec4899 100%)' }} />
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: `linear-gradient(90deg, ${currentLevel.color} 0%, ${gamification.levels[Math.min(gamification.levels.length - 1, gamification.levels.indexOf(currentLevel) + 1)]?.color || '#a855f7'} 50%, ${gamification.levels[Math.min(gamification.levels.length - 1, gamification.levels.indexOf(currentLevel) + 2)]?.color || '#ec4899'} 100%)` }} />
                       </div>
-                      <p className="text-[10px] font-mono mt-1.5" style={{ color: C.textMuted }}>Next rank: Vanguard Monarch</p>
+                      <p className="text-[10px] font-mono mt-1.5" style={{ color: C.textMuted }}>Next rank: {gamification.levels[Math.min(gamification.levels.length - 1, gamification.levels.indexOf(currentLevel) + 1)]?.name || 'MAX LEVEL'}</p>
                     </div>
                   </div>
 
                   <div className="lg:col-span-8 space-y-4">
                     <div>
-                      <XenText size="xl">NIKHIL DATH</XenText>
-                      <p className="text-[10px] font-mono mt-0.5" style={{ color: C.cyanDim }}>CLASS // DEEP-SPACE COMMANDER & ORBITAL SPECIALIST</p>
+                      <XenText size="xl">{profile.player_name.toUpperCase()}</XenText>
+                      <p className="text-[10px] font-mono mt-0.5" style={{ color: C.cyanDim }}>CLASS // {profile.player_role.toUpperCase()}</p>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {[
-                        { label: 'FATIGUE INDEX', val: 'LOW (12%)', color: C.green },
-                        { label: 'BONE DENSITY', val: '98.4%', color: C.cyan },
-                        { label: 'HYDRATION', val: '3.8 L/DAY', color: C.cyan },
-                        { label: 'STRESS RESIST', val: 'RANK S', color: C.purple },
-                      ].map(s => (
-                        <div key={s.label} className="bg-obsidian/60 border rounded p-2.5" style={{ borderColor: C.cyanBorder }}>
-                          <p className="text-[9px] font-mono" style={{ color: C.textMuted }}>{s.label}</p>
-                          <p className="font-orbitron text-sm font-bold mt-0.5" style={{ color: s.color, textShadow: `0 0 8px ${s.color}60` }}>{s.val}</p>
-                        </div>
-                      ))}
+                      {indicators.slice(0, 4).map(ind => {
+                        const val = currentValues[ind.id];
+                        const status = val !== null ? getStatus(val, ind) : 'muted';
+                        const statusColor = status === 'healthy' ? C.green : status === 'caution' ? '#fbbf24' : status === 'critical' ? C.red : C.textMuted;
+                        const displayVal = val !== null ? (ind.format ? ind.format(val) : `${val}${ind.unit !== '/10' && ind.unit !== '% SpO2' ? ` ${ind.unit}` : ''}`) : '--';
+                        return (
+                          <div key={ind.id} className="bg-obsidian/60 border rounded p-2.5" style={{ borderColor: C.cyanBorder }}>
+                            <p className="text-[9px] font-mono" style={{ color: C.textMuted }}>{ind.name.toUpperCase().replace(/ /g, '-')}</p>
+                            <p className="font-orbitron text-sm font-bold mt-0.5" style={{ color: statusColor, textShadow: `0 0 8px ${statusColor}60` }}>{displayVal}</p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -856,7 +912,7 @@ export function Home() {
               <SystemDetailPanel
                 system={activeSystem}
                 currentValues={currentValues}
-                history={state.history}
+                history={history}
                 editingId={editingId}
                 draft={draft}
                 onDraftChange={setDraft}
@@ -871,8 +927,8 @@ export function Home() {
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {indicators.map((ind, i) => {
                   const val = currentValues[ind.id];
-                  const reading = state.readings[ind.id];
-                  const hist = state.history[ind.id] || [];
+                  const reading = history[ind.id]?.[0] || null;
+                  const hist = history[ind.id] || [];
                   const status = val !== null ? getStatus(val, ind) : 'muted';
                   const trend = hist.length >= 2 ? hist[0].value - hist[1].value : 0;
                   const icon = getIndIcon(ind.id);
@@ -890,7 +946,7 @@ export function Home() {
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg" style={{ background: `${color}12`, color }}>
-                              {icon}
+                              <FontAwesomeIcon icon={icon} size="lg" />
                             </div>
                             <div>
                               <XenText size="sm" glowColor={status === 'critical' ? 'red' : 'cyan'}>{ind.name}</XenText>
@@ -1045,7 +1101,7 @@ export function Home() {
                 <SystemDetailPanel
                   system={activeSystem}
                   currentValues={currentValues}
-                  history={state.history}
+                  history={history}
                   editingId={editingId}
                   draft={draft}
                   onDraftChange={setDraft}
@@ -1068,7 +1124,7 @@ export function Home() {
                         boxShadow: selectedSystem === sys.id ? `0 0 14px ${sys.color}33` : undefined,
                       }}
                     >
-                      <span className="text-lg" style={{ filter: 'drop-shadow(0 0 4px rgba(0,243,255,0.3))' }}>{getEmoji(sys.id)}</span>
+                      <FontAwesomeIcon icon={getEmoji(sys.id)} size="lg" style={{ color: sys.color, filter: 'drop-shadow(0 0 4px rgba(0,243,255,0.3))' }} />
                       <div>
                         <XenText size="sm">{sys.name}</XenText>
                         <p className="text-[10px] mt-0.5" style={{ color: C.textMuted }}>{sys.indicators.length} indicator{sys.indicators.length !== 1 ? 's' : ''}</p>
@@ -1084,24 +1140,24 @@ export function Home() {
                   <div className="mt-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Star size={12} className="text-amber-400" style={{ filter: 'drop-shadow(0 0 4px rgba(245,158,11,0.5))' }} />
-                      <XenText size="sm" glowColor="cyan">{state.totalXp} XP</XenText>
+                      <XenText size="sm" glowColor="cyan">{stats.total_xp} XP</XenText>
                     </div>
                     <XenText size="sm" glowColor="cyan">Level {level}</XenText>
                   </div>
-                  <div className="mt-2">
+                                     <div className="mt-2">
                     <div className="flex justify-between text-[10px] font-mono mb-1" style={{ color: C.textMuted }}>
                       <span>Next rank</span>
-                      <span style={{ color: C.cyan }}>{Math.round(((state.totalXp % 500) / 500) * 100)}%</span>
+                      <span style={{ color: currentLevel.color }}>{progressPct}%</span>
                     </div>
                     <div className="w-full bg-obsidian rounded-full h-2 overflow-hidden border" style={{ borderColor: C.cyanBorder }}>
-                      <div className="h-full rounded-full" style={{ width: `${((state.totalXp % 500) / 500) * 100}%`, background: 'linear-gradient(90deg, #00f3ff, #a855f7)' }} />
+                      <div className="h-full rounded-full" style={{ width: `${progressPct}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${gamification.levels[Math.min(gamification.levels.length - 1, gamification.levels.indexOf(currentLevel) + 1)]?.color || '#a855f7'})` }} />
                     </div>
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-3 pt-3" style={{ borderTop: '1px solid rgba(0,243,255,0.1)' }}>
                     {[
-                      { v: state.streak.toString(), l: 'Streak', c: '#f97316' },
-                      { v: state.totalCheckins.toString(), l: 'Logs', c: C.cyan },
-                      { v: state.unlockedBadges.length.toString(), l: 'Badges', c: C.green },
+                      { v: stats.current_streak.toString(), l: 'Streak', c: '#f97316' },
+                      { v: stats.total_checkins.toString(), l: 'Logs', c: C.cyan },
+                      { v: stats.unlocked_badges.length.toString(), l: 'Badges', c: C.green },
                     ].map(s => (
                       <div key={s.l} className="text-center p-2 rounded" style={{ background: 'rgba(8,12,20,0.6)', border: '1px solid rgba(0,243,255,0.1)' }}>
                         <div className="text-sm font-bold" style={{ color: s.c }}>{s.v}</div>
@@ -1117,9 +1173,9 @@ export function Home() {
                     {[
                       'Real-time 3D body map with clickable systems',
                       'NASA HRP 5-hazard framework mapped to body',
-                      'Gesture-based vital sign logging',
+                      'Real vital sign logging with local storage',
                       'Trend tracking with 7-day sparklines',
-                      'Built for orbital, lunar & deep space missions',
+                      `Mission: ${mission.name} // ${mission.environment}`,
                     ].map((t, i) => (
                       <div key={i} className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full mt-0.5" style={{ background: C.green, boxShadow: '0 0 4px rgba(34,197,94,0.6)' }} />
@@ -1178,17 +1234,17 @@ export function Home() {
                 </SciBox>
                 <SciBox className="p-5" glowColor="purple">
                   <Label text="STREAK STATUS" color="purple" />
-                  <div className="mt-3 flex items-center gap-3">
+                                      <div className="mt-3 flex items-center gap-3">
                     <div className="w-10 h-10 rounded bg-cyan-950 border flex items-center justify-center" style={{ borderColor: C.cyan }}>
                       <Zap size={18} className="text-orange-400" style={{ filter: 'drop-shadow(0 0 6px rgba(249,115,22,0.5))' }} />
                     </div>
                     <div>
-                      <XenText size="lg" glowColor="red">{state.streak}</XenText>
+                      <XenText size="lg" glowColor="red">{stats.current_streak}</XenText>
                       <p className="text-[10px] font-mono mt-0.5" style={{ color: C.textMuted }}>Day Streak</p>
                     </div>
                   </div>
                   <div className="mt-2 text-xs font-mono" style={{ color: C.textMuted }}>
-                    Best: 7 days · Keep logging to maintain
+                    Best: {stats.longest_streak} days · Keep logging to maintain
                   </div>
                 </SciBox>
               </div>
@@ -1220,7 +1276,7 @@ export function Home() {
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg" style={{ background: `${ic}12`, color: ic }}>
-                              {em}
+                              <FontAwesomeIcon icon={em} size="lg" />
                             </div>
                             <div>
                               <XenText size="md" glowColor={ic === C.red ? 'red' : 'cyan'}>{ind.name}</XenText>
@@ -1241,7 +1297,10 @@ export function Home() {
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {ind.hazardLinks.map(h => (
                             <span key={h} className="text-[10px] px-2 py-0.5 rounded font-mono" style={{ background: 'rgba(239,68,68,0.08)', color: C.red, border: '1px solid rgba(239,68,68,0.2)' }}>
-                              {hazardLabel(h)}
+                              <span className="flex items-center gap-1">
+                                <HazardIcon id={h} />
+                                {hazardLabel(h)}
+                              </span>
                             </span>
                           ))}
                         </div>
@@ -1342,24 +1401,24 @@ export function Home() {
                       <XenText size="lg" glowColor="cyan">MISSION PROGRESS</XenText>
                     </div>
                     <div className="text-right">
-                      <XenText size="xl" glowColor="cyan">{state.totalXp}</XenText>
+                      <XenText size="xl" glowColor="cyan">{stats.total_xp}</XenText>
                       <span className="text-xs font-mono ml-1" style={{ color: C.textMuted }}>XP</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs mb-1.5" style={{ color: C.textMuted }}>
-                    <span className="font-orbitron" style={{ color: C.text }}>Vanguard Scout · Lv.{level}</span>
-                    <span className="font-mono" style={{ color: C.cyan }}>{xp} / {maxXp} XP</span>
+                                     <div className="flex items-center justify-between text-xs mb-1.5" style={{ color: C.textMuted }}>
+                    <span className="font-orbitron" style={{ color: C.text }}>{currentLevel.name} · Lv.{level}</span>
+                    <span className="font-mono" style={{ color: currentLevel.color }}>{stats.total_xp} / {maxXp} XP</span>
                   </div>
                   <div className="w-full bg-obsidian rounded-full h-3 overflow-hidden border mt-1" style={{ borderColor: C.cyanBorder }}>
-                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(xp / maxXp) * 100}%`, background: 'linear-gradient(90deg, #00f3ff, #a855f7, #ec4899)' }} />
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${gamification.levels[Math.min(gamification.levels.length - 1, gamification.levels.indexOf(currentLevel) + 1)]?.color || '#a855f7'}, ${gamification.levels[Math.min(gamification.levels.length - 1, gamification.levels.indexOf(currentLevel) + 2)]?.color || '#ec4899'})` }} />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4 mt-4 pt-4" style={{ borderTop: '1px solid rgba(0,243,255,0.1)' }}>
                     {[
-                      { label: 'Day Streak', value: String(state.streak), sub: 'days', color: '#f97316' },
-                      { label: 'Total Logs', value: String(state.totalCheckins), sub: 'readings', color: C.cyan },
-                      { label: 'Badges', value: String(state.unlockedBadges.length), sub: 'earned', color: C.green },
+                      { label: 'Day Streak', value: String(stats.current_streak), sub: 'days', color: '#f97316' },
+                      { label: 'Total Logs', value: String(stats.total_checkins), sub: 'readings', color: C.cyan },
+                      { label: 'Badges', value: String(stats.unlocked_badges.length), sub: 'earned', color: C.green },
                     ].map(s => (
                       <div key={s.label} className="text-center p-3 rounded-lg" style={{ background: 'rgba(8,12,20,0.6)', border: '1px solid rgba(0,243,255,0.1)' }}>
                         <div className="text-2xl font-orbitron font-bold" style={{ color: s.color, textShadow: `0 0 12px ${s.color}60` }}>{s.value}</div>
@@ -1413,7 +1472,7 @@ export function Home() {
                   <Label text="ACHIEVEMENTS" color="purple" />
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {gamification.badges.map(badge => {
-                      const unlocked = state.unlockedBadges.includes(badge.id);
+                      const unlocked = stats.unlocked_badges.includes(badge.id);
                       return (
                         <div
                           key={badge.id}
@@ -1426,7 +1485,7 @@ export function Home() {
                           }}
                         >
                           <div className="text-base" style={{ filter: unlocked ? 'drop-shadow(0 0 4px rgba(168,85,247,0.6))' : 'grayscale(1)' }}>
-                            {unlocked ? '🏅' : '🔒'}
+                            {unlocked ? <FontAwesomeIcon icon={faMedal} size="sm" style={{ filter: unlocked ? 'drop-shadow(0 0 4px rgba(168,85,247,0.6))' : 'grayscale(1)' }} /> : <FontAwesomeIcon icon={faLock} size="sm" style={{ filter: 'grayscale(1)' }} />}
                           </div>
                           <p className="text-[10px] font-mono mt-1 leading-tight" style={{ color: unlocked ? C.purple : C.textMuted }}>
                             {badge.title}
@@ -1439,19 +1498,84 @@ export function Home() {
 
                 <SciBox className="p-5" glowColor="green">
                   <Label text="MISSION SETTINGS" color="green" />
-                  <div className="mt-3 space-y-2 text-xs font-mono" style={{ color: C.textMuted }}>
-                    {[
-                      { k: 'Callsign', v: mission.callsign },
-                      { k: 'Environment', v: mission.environment },
-                      { k: 'Mission Cycle', v: mission.cycle },
-                      { k: 'Notifications', v: 'Enabled' },
-                      { k: 'Data Sync', v: 'Local + Ground' },
-                    ].map(s => (
-                      <div key={s.k} className="flex justify-between py-1.5 border-b last:border-0" style={{ borderColor: 'rgba(0,243,255,0.08)' }}>
-                        <span>{s.k}</span>
-                        <span className="text-cyan-300">{s.v}</span>
-                      </div>
-                    ))}
+                  <div className="mt-3 space-y-3 text-xs font-mono" style={{ color: C.textMuted }}>
+                    <div className="flex justify-between items-center py-1.5 border-b" style={{ borderColor: 'rgba(0,243,255,0.08)' }}>
+                      <span>Callsign</span>
+                      <span className="text-cyan-300">{profile.callsign || mission.callsign}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5 border-b" style={{ borderColor: 'rgba(0,243,255,0.08)' }}>
+                      <span>Environment</span>
+                      <span className="text-cyan-300">{mission.environment}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5 border-b" style={{ borderColor: 'rgba(0,243,255,0.08)' }}>
+                      <span>Mission Cycle</span>
+                      <span className="text-cyan-300">{mission.cycle}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5 border-b" style={{ borderColor: 'rgba(0,243,255,0.08)' }}>
+                      <span>Notifications</span>
+                      <span className="text-cyan-300">Enabled</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5" style={{ borderColor: 'rgba(0,243,255,0.08)' }}>
+                      <span>Data Sync</span>
+                      <span className="text-cyan-300">{isSupabaseConfigured ? 'Connected' : 'Local Only'}</span>
+                    </div>
+                  </div>
+                </SciBox>
+
+                <SciBox className="p-5" glowColor="purple">
+                  <Label text="EDIT PROFILE" color="purple" />
+                  <div className="mt-3 space-y-3">
+                    <div>
+                      <label className="block text-[10px] font-mono mb-1" style={{ color: C.textMuted }}>
+                        Player Name
+                      </label>
+                      <input
+                        type="text"
+                        value={profile.player_name}
+                        onChange={(e) => setProfile(prev => ({ ...prev, player_name: e.target.value }))}
+                        className="w-full bg-obsidian border border-cyan-500/30 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-cyan-400"
+                        placeholder="Enter name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono mb-1" style={{ color: C.textMuted }}>
+                        Role / Rank
+                      </label>
+                      <input
+                        type="text"
+                        value={profile.player_role}
+                        onChange={(e) => setProfile(prev => ({ ...prev, player_role: e.target.value }))}
+                        className="w-full bg-obsidian border border-cyan-500/30 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-cyan-400"
+                        placeholder="Enter role"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono mb-1" style={{ color: C.textMuted }}>
+                        Callsign
+                      </label>
+                      <input
+                        type="text"
+                        value={profile.callsign || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, callsign: e.target.value }))}
+                        className="w-full bg-obsidian border border-cyan-500/30 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-cyan-400"
+                        placeholder="Enter callsign"
+                      />
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (profile.id) {
+                          await saveProfile(profile);
+                        }
+                      }}
+                      className="w-full py-2 rounded text-xs font-mono font-bold transition-all"
+                      style={{ 
+                        background: 'linear-gradient(135deg, rgba(0,243,255,0.3), rgba(168,85,247,0.3))',
+                        color: C.cyan,
+                        border: '1px solid rgba(0,243,255,0.4)',
+                      }}
+                    >
+                      SAVE PROFILE
+                    </button>
                   </div>
                 </SciBox>
               </div>
@@ -1498,20 +1622,43 @@ function MiniSparkline({ values, color }: { values: number[]; color: string }) {
   );
 }
 
-function getEmoji(id: string): string {
-  const map: Record<string, string> = {
-    cardiovascular: '❤️', respiratory: '🫁', metabolic: '🧪',
-    neurological: '🧠', musculoskeletal: '🦴', immune: '🛡️', behavioral: '💭',
+function getTodayDate(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getEmoji(id: string) {
+  const map: Record<string, typeof faHeart> = {
+    cardiovascular: faHeart,
+    respiratory: faLungs,
+    metabolic: faFlask,
+    neurological: faBrain,
+    musculoskeletal: faBone,
+    immune: faShieldHalved,
+    behavioral: faBan,
   };
-  return map[id] || '🔬';
+  return map[id] || faFlask;
 }
 
 function hazardLabel(id: string): string {
   const map: Record<string, string> = {
-    radiation: '☀️ Radiation', isolation: '🔒 Isolation',
-    distance: '🌍 Distance', gravity: '🌙 Gravity', closed: '🏠 Closed Env',
+    radiation: 'Radiation',
+    isolation: 'Isolation',
+    distance: 'Distance',
+    gravity: 'Gravity',
+    closed: 'Closed Env',
   };
   return map[id] || id;
+}
+
+function HazardIcon({ id }: { id: string }) {
+  const map: Record<string, typeof faSun> = {
+    radiation: faSun,
+    isolation: faLock,
+    distance: faGlobe,
+    gravity: faMoon,
+    closed: faHouse,
+  };
+  return <FontAwesomeIcon icon={map[id] || faQuestionCircle} size="xs" style={{ color: C.red }} />;
 }
 
 // Education tab state — moved inside component below

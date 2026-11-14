@@ -1,6 +1,8 @@
 'use client';
 
 import { MapPin, Activity, Info } from 'lucide-react';
+import { faHeart, faLungs, faFlask, faBrain, faBone, faShieldHalved, faSun, faGlobe, faHouse, faQuestionCircle, faBan, faLock } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { bodySystems } from '../content';
 
 interface BodySystemCardProps {
@@ -35,16 +37,16 @@ function SystemIcon({ systemId, isActive }: { systemId: string; isActive: boolea
 }
 
 function getIcon(systemId: string) {
-  switch (systemId) {
-    case 'cardiovascular': return <span>❤️</span>;
-    case 'respiratory': return <span>🫁</span>;
-    case 'metabolic': return <span>🧪</span>;
-    case 'neurological': return <span>🧠</span>;
-    case 'musculoskeletal': return <span>🦴</span>;
-    case 'immune': return <span>🛡️</span>;
-    case 'behavioral': return <span>💭</span>;
-    default: return <span>•</span>;
-  }
+  const iconMap: Record<string, typeof faHeart> = {
+    cardiovascular: faHeart,
+    respiratory: faLungs,
+    metabolic: faFlask,
+    neurological: faBrain,
+    musculoskeletal: faBone,
+    immune: faShieldHalved,
+    behavioral: faBan,
+  };
+  return iconMap[systemId] || faFlask;
 }
 
 export function BodySystemCard({ selectedId, onSelect }: BodySystemCardProps) {
@@ -82,7 +84,7 @@ export function BodySystemCard({ selectedId, onSelect }: BodySystemCardProps) {
                     border: isActive ? `2px solid ${color}` : '1px solid transparent',
                   }}
                 >
-                  {getIcon(system.id)}
+                  <FontAwesomeIcon icon={getIcon(system.id)} size="lg" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold truncate" style={{ color: isActive ? color : 'var(--text-primary)' }}>
@@ -105,11 +107,12 @@ export function BodySystemCard({ selectedId, onSelect }: BodySystemCardProps) {
                         color: '#ef4444',
                       }}
                     >
-                      {hazId === 'radiation' ? '☀️ radiation' :
-                       hazId === 'isolation' ? '🔒 isolation' :
-                       hazId === 'distance' ? '🌍 distance' :
-                       hazId === 'gravity' ? '🌙 gravity' :
-                       hazId === 'closed' ? '🏠 closed' : hazId}
+                      <FontAwesomeIcon icon={hazId === 'radiation' ? faSun :
+                        hazId === 'isolation' ? faLock :
+                        hazId === 'distance' ? faGlobe :
+                        hazId === 'gravity' ? faMoon :
+                        hazId === 'closed' ? faHouse : faQuestionCircle} size="xs" />
+                      {' '}{hazId}
                     </span>
                   ))}
                 </div>

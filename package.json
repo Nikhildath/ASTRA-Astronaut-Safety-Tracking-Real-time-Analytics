@@ -10,8 +10,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fortawesome/free-regular-svg-icons": "^7.3.1",
+    "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "@fortawesome/react-fontawesome": "^3.5.0",
     "@gsap/react": "^2.1.2",
     "@radix-ui/react-slot": "^1.5.0",
+    "@supabase/supabase-js": "^2.119.0",
     "@types/three": "^0.187.0",
     "framer-motion": "^14.14.0",
     "gsap": "^3.15.1",
