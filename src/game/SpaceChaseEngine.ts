@@ -113,6 +113,7 @@ export type GameCallbacks = {
   onStats: (stats: GameStats) => void;
   onGameOver: (stats: GameStats) => void;
   onError: (message: string) => void;
+  onLoadingProgress?: (progress: number, stepText: string) => void;
 };
 
 /* ─────────────────────────────────────────────────────────────
@@ -1106,20 +1107,46 @@ export class SpaceChaseEngine {
 
   private async loadModels() {
     this.cb.onState('loading');
+    this.cb.onLoadingProgress?.(15, 'INITIALIZING THREE.JS WEBGL RENDER CONTEXT...');
     try {
       const loader = new GLTFLoader();
+      let p1 = 0;
+      let p2 = 0;
+      const updateProg = (step: string) => {
+        const total = Math.min(95, Math.round(20 + (p1 + p2) * 37));
+        this.cb.onLoadingProgress?.(total, step);
+      };
+
       const [playerGltf, enemyGltf] = await Promise.all([
-        loader.loadAsync(PLAYER_MODEL_URL),
-        loader.loadAsync(ENEMY_MODEL_URL),
+        loader.loadAsync(
+          PLAYER_MODEL_URL,
+          (xhr) => {
+            if (xhr.lengthComputable && xhr.total > 0) {
+              p1 = xhr.loaded / xhr.total;
+              updateProg('STREAMING FIGHTER AIRFRAME & PBR CERAMIC MESH...');
+            }
+          }
+        ),
+        loader.loadAsync(
+          ENEMY_MODEL_URL,
+          (xhr) => {
+            if (xhr.lengthComputable && xhr.total > 0) {
+              p2 = xhr.loaded / xhr.total;
+              updateProg('DECODING ALIEN BIO-MECHANICAL ENEMY HULL...');
+            }
+          }
+        ),
       ]);
       if (this.disposed) return;
 
+      this.cb.onLoadingProgress?.(96, 'COMPILING SHADER PIPELINE & STARFIELD BUFFERS...');
       this.enemyTemplate = enemyGltf.scene;
 
       const playerShip = this.prepareModel(playerGltf.scene, PLAYER_LENGTH, PLAYER_MODEL_YAW);
       this.playerModel = playerShip;
       this.player.add(playerShip);
 
+      this.cb.onLoadingProgress?.(100, 'ALL FLIGHT SYSTEMS NOMINAL // READY');
       this.state = 'ready';
       this.cb.onState('ready');
     } catch (err) {

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router';
 import { motion } from 'framer-motion';
 import {
   Globe, Activity, AlertTriangle, Check, Plus, Clock,
   Star, Zap, ChevronRight, Settings, HelpCircle, Award,
-  Wifi, Shield, Crosshair,
+  Wifi, Shield, Crosshair, X,
 } from 'lucide-react';
 import { faHeart, faLungs, faDroplet, faThermometerHalf, faMoon, faFaceSmile, faWater, faFlask, faBrain, faBone, faShieldHalved, faSun, faGlobe, faHouse, faQuestionCircle, faBan, faLock, faMedal } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -25,11 +25,21 @@ import {
 } from '../lib/data-service';
 import type { ProfileData, StatsData } from '../lib/types';
 import { ThreeScene } from '../components/ThreeScene';
+import { IndicatorDetailModal } from '../components/IndicatorDetailModal';
+import { generateDemoReadings, getSpecificIssueMessage } from '../utils/telemetry-utils';
+import { DailyCheckinModal } from '../components/DailyCheckinModal';
 import {
   indicators, actionLibrary, bodySystems, mission, hazards,
   gamification, glossary, contributors, exerciseLibrary, nutritionTips,
 } from '../content';
-import type { Reading } from '../content';
+import type { Reading, Indicator } from '../content';
+
+interface ActiveIssue {
+  ind: Indicator;
+  value: number;
+  status: 'critical' | 'caution';
+  message: string;
+}
 
 /* ─── Color tokens (matching the Solo Leveling sci-fi style) ─── */
 
@@ -202,6 +212,7 @@ function SystemDetailPanel({
   onSave,
   onOpenHazard,
   onOpenActions,
+  onOpenIndicator,
 }: {
   system: BodySystem;
   currentValues: Record<string, number | null>;
@@ -214,6 +225,7 @@ function SystemDetailPanel({
   onSave: (id: string, value: number) => void;
   onOpenHazard: (id: string) => void;
   onOpenActions: () => void;
+  onOpenIndicator?: (id: string) => void;
 }) {
   const glowColor: 'cyan' | 'red' | 'purple' | 'green' =
     system.id === 'cardiovascular' || system.id === 'immune'
@@ -295,10 +307,14 @@ function SystemDetailPanel({
                 className="rounded-lg border p-3"
                 style={{ borderColor: 'rgba(0,243,255,0.12)', background: 'rgba(3,9,16,0.55)' }}
               >
-                <div className="flex items-center justify-between gap-2">
+                <div
+                  className="flex items-center justify-between gap-2 cursor-pointer group/item"
+                  onClick={() => onOpenIndicator?.(ind.id)}
+                  title={`View ${ind.name} history, graph, and analysis`}
+                >
                   <div className="flex items-center gap-2 min-w-0">
                     <FontAwesomeIcon icon={getIndIcon(ind.id)} size="lg" style={{ color }} />
-                    <span className="text-xs font-medium truncate">{ind.name}</span>
+                    <span className="text-xs font-medium truncate group-hover/item:text-cyan-300 transition-colors">{ind.name}</span>
                     <StatusBadge status={status} />
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -306,10 +322,17 @@ function SystemDetailPanel({
                       <MiniSparkline values={histValues} color={color} />
                     )}
                     <span className="font-orbitron text-sm" style={{ color }}>{display}</span>
+                    <ChevronRight size={11} className="text-cyan-400 opacity-40 group-hover/item:opacity-100 group-hover/item:translate-x-0.5 transition-all" />
                   </div>
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2 text-[9px] font-mono" style={{ color: C.textMuted }}>
-                  <span>7-DAY TREND</span>
+                  <button
+                    type="button"
+                    onClick={() => onOpenIndicator?.(ind.id)}
+                    className="text-cyan-400/80 hover:text-cyan-300 transition-colors"
+                  >
+                    View History & Graph →
+                  </button>
                   <span>NORMAL {ind.normalRange.join(' – ')}</span>
                 </div>
 
@@ -394,6 +417,8 @@ export function Home() {
   const [draft, setDraft] = useState('');
   const [selectedSystem, setSelectedSystem] = useState('neurological');
   const [modelVariant, setModelVariant] = useState<string>('astronaut');
+  const [selectedIndicatorModal, setSelectedIndicatorModal] = useState<string | null>(null);
+  const [showDailyCheckin, setShowDailyCheckin] = useState(false);
   const [profile, setProfile] = useState<ProfileData>({ id: '', player_name: 'Commander', player_role: 'Mission Specialist', callsign: 'AUSTRALIS-4' });
   const [stats, setStats] = useState<StatsData>({ id: '', player_id: '', total_xp: 0, total_checkins: 0, current_streak: 0, longest_streak: 0, last_checkin_date: undefined, unlocked_badges: [] });
   // Note: isLoading and isSyncing states are available for future UI enhancements
@@ -449,9 +474,21 @@ export function Home() {
     async function loadHistory() {
       if (!profile.id) return;
       const readings: Record<string, Reading[]> = {};
+      let totalCount = 0;
       for (const ind of indicators) {
         const indReadings = await getReadings(profile.id, ind.id);
         readings[ind.id] = indReadings;
+        totalCount += indReadings.length;
+      }
+      // If no telemetry exists at all (fresh session), auto-seed 14-day history for all indicators
+      if (totalCount === 0) {
+        for (const ind of indicators) {
+          const demo = generateDemoReadings(ind, 14);
+          for (let i = demo.length - 1; i >= 0; i--) {
+            await saveReading(profile.id, demo[i]);
+          }
+          readings[ind.id] = demo;
+        }
       }
       setHistory(readings);
       setLastRefreshed(new Date());
@@ -505,6 +542,27 @@ export function Home() {
     else if (status === 'healthy') healthy++;
     else caution++;
   }
+
+  const [alertDismissed, setAlertDismissed] = useState(false);
+
+  const activeIssues = useMemo<ActiveIssue[]>(() => {
+    const list: ActiveIssue[] = [];
+    for (const [id, v] of Object.entries(currentValues)) {
+      if (v === null || v === undefined) continue;
+      const ind = indMap.get(id);
+      if (!ind) continue;
+      const status = getStatus(v, ind);
+      if (status !== 'healthy') {
+        list.push({
+          ind,
+          value: v,
+          status,
+          message: getSpecificIssueMessage(ind, v),
+        });
+      }
+    }
+    return list.sort((a, b) => (a.status === 'critical' ? -1 : b.status === 'critical' ? 1 : 0));
+  }, [currentValues, indMap]);
 
   const activeSystem = bodySystems.find(s => s.id === selectedSystem) ?? bodySystems[0];
 
@@ -579,6 +637,61 @@ export function Home() {
       };
     });
   }, [profile.id, history, currentValues]);
+
+  // Generate demo readings for a single indicator
+  const handleGenerateDemo = useCallback(async (indicatorId: string) => {
+    const ind = indicators.find(i => i.id === indicatorId);
+    if (!ind || !profile.id) return;
+    const demo = generateDemoReadings(ind, 14);
+    for (let i = demo.length - 1; i >= 0; i--) {
+      await saveReading(profile.id, demo[i]);
+    }
+    const fresh = await getReadings(profile.id, indicatorId);
+    setHistory(prev => ({ ...prev, [indicatorId]: fresh.length > 0 ? fresh : demo }));
+  }, [profile.id]);
+
+  // Bulk save all readings from daily check-in modal
+  const handleSaveAll = useCallback(async (readingsMap: Record<string, number>, notes?: string) => {
+    if (!profile.id) return;
+    const now = Date.now();
+    for (const [id, val] of Object.entries(readingsMap)) {
+      const reading: Reading = { indicatorId: id, value: val, timestamp: now, notes };
+      await saveReading(profile.id, reading);
+    }
+    // Refresh all readings
+    const updated: Record<string, Reading[]> = {};
+    for (const ind of indicators) {
+      updated[ind.id] = await getReadings(profile.id, ind.id);
+    }
+    setHistory(updated);
+
+    // Update stats with full panel bonus (+25 XP) and increment streak
+    setStats(prev => {
+      const today = getTodayDate();
+      const wasSameDay = prev.last_checkin_date === today;
+      const newStreak = wasSameDay ? prev.current_streak : (prev.current_streak + 1);
+      const newLongestStreak = Math.max(prev.longest_streak, newStreak);
+      const newTotalXp = prev.total_xp + 25;
+      const newTotalCheckins = prev.total_checkins + 1;
+      const newBadges = checkAndAwardBadges({
+        ...prev,
+        total_xp: newTotalXp,
+        total_checkins: newTotalCheckins,
+        current_streak: newStreak,
+        longest_streak: newLongestStreak,
+        last_checkin_date: today,
+      }, true);
+      return {
+        ...prev,
+        total_xp: newTotalXp,
+        total_checkins: newTotalCheckins,
+        current_streak: newStreak,
+        longest_streak: newLongestStreak,
+        last_checkin_date: today,
+        unlocked_badges: newBadges,
+      };
+    });
+  }, [profile.id]);
 
   return (
     <div className="min-h-screen bg-void text-slate-100 font-sans overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -685,6 +798,21 @@ export function Home() {
                     {lastRefreshed.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </span>
                 )}
+              </button>
+
+              <button
+                onClick={() => setShowDailyCheckin(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-orbitron font-bold transition-all hover:brightness-110"
+                style={{
+                  background: 'linear-gradient(90deg, #0077b6 0%, #00f3ff 100%)',
+                  color: '#030509',
+                  boxShadow: '0 0 15px rgba(0,243,255,0.4)',
+                  border: '1px solid #00f3ff',
+                }}
+                title="Log all vitals for today's check-in (+25 XP)"
+              >
+                <Plus size={13} className="stroke-[3]" />
+                DAILY CHECK-IN
               </button>
 
               <div className="flex items-center gap-1.5">
@@ -900,6 +1028,131 @@ export function Home() {
           {/* ─── Dashboard View ─────── */}
           {view === 'dashboard' && (
             <div className="space-y-5">
+              {/* ─── PHYSIOLOGICAL TELEMETRY ALERT BANNER ─── */}
+              {activeIssues.length > 0 && !alertDismissed && (
+                <div
+                  className="rounded-xl border p-4 sm:p-5 relative overflow-hidden transition-all"
+                  style={{
+                    background: critical > 0
+                      ? 'linear-gradient(135deg, rgba(239,68,68,0.18) 0%, rgba(13,19,34,0.95) 70%)'
+                      : 'linear-gradient(135deg, rgba(245,158,11,0.16) 0%, rgba(13,19,34,0.95) 70%)',
+                    borderColor: critical > 0 ? 'rgba(239,68,68,0.5)' : 'rgba(245,158,11,0.5)',
+                    boxShadow: critical > 0
+                      ? '0 0 30px rgba(239,68,68,0.25), inset 0 0 15px rgba(239,68,68,0.1)'
+                      : '0 0 25px rgba(245,158,11,0.2), inset 0 0 15px rgba(245,158,11,0.08)',
+                  }}
+                >
+                  {/* Top Bar of Alert Banner */}
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                          critical > 0 ? 'animate-pulse' : ''
+                        }`}
+                        style={{
+                          background: critical > 0 ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.25)',
+                          border: `1px solid ${critical > 0 ? '#ef4444' : '#fbbf24'}`,
+                          color: critical > 0 ? '#ef4444' : '#fbbf24',
+                        }}
+                      >
+                        <AlertTriangle size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className="font-orbitron text-xs sm:text-sm font-black tracking-widest uppercase"
+                            style={{ color: critical > 0 ? '#ef4444' : '#fbbf24' }}
+                          >
+                            {critical > 0
+                              ? `CRITICAL PHYSIOLOGICAL ALERT // ${critical} THREAT${critical > 1 ? 'S' : ''} ACTIVE`
+                              : `PHYSIOLOGICAL CAUTION ADVISORY // ${caution} PARAMETER${caution > 1 ? 'S' : ''}`}
+                          </span>
+                          <span
+                            className="px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase font-bold"
+                            style={{
+                              background: critical > 0 ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)',
+                              color: critical > 0 ? '#fca5a5' : '#fde047',
+                              border: `1px solid ${critical > 0 ? '#ef444460' : '#fbbf2460'}`,
+                            }}
+                          >
+                            ASTRONAUT SAFETY PROTOCOL
+                          </span>
+                        </div>
+                        <p className="text-xs font-mono text-slate-300 mt-0.5">
+                          Autonomous health telemetry detected physiological parameters out of safe spaceflight limits.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setAlertDismissed(true)}
+                      title="Acknowledge alert"
+                      className="text-slate-400 hover:text-white p-1 rounded hover:bg-white/5 transition-colors shrink-0 text-[10px] font-mono flex items-center gap-1"
+                    >
+                      <X size={14} />
+                      <span className="hidden sm:inline">ACKNOWLEDGE</span>
+                    </button>
+                  </div>
+
+                  {/* Issue Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    {activeIssues.map(issue => {
+                      const isCrit = issue.status === 'critical';
+                      const badgeColor = isCrit ? '#ef4444' : '#fbbf24';
+                      return (
+                        <div
+                          key={issue.ind.id}
+                          className="rounded-lg border p-3 flex flex-col justify-between transition-all hover:border-cyan-400/40"
+                          style={{
+                            background: 'rgba(3, 5, 9, 0.65)',
+                            borderColor: `${badgeColor}35`,
+                          }}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="font-orbitron text-xs font-bold text-white flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full" style={{ background: badgeColor }} />
+                                {issue.ind.name.toUpperCase()}
+                              </span>
+                              <span
+                                className="font-orbitron text-xs font-black tracking-wider px-2 py-0.5 rounded"
+                                style={{
+                                  background: `${badgeColor}18`,
+                                  color: badgeColor,
+                                  border: `1px solid ${badgeColor}40`,
+                                }}
+                              >
+                                {issue.ind.format ? issue.ind.format(issue.value) : issue.value}
+                              </span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed text-slate-300 font-mono mb-3">
+                              {issue.message}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[10px] font-mono">
+                            <span className="text-slate-400">
+                              REF: {issue.ind.id.toUpperCase()}
+                            </span>
+                            <button
+                              onClick={() => setSelectedIndicatorModal(issue.ind.id)}
+                              className="px-2.5 py-1 rounded font-orbitron font-bold text-[10px] border flex items-center gap-1 transition-all hover:shadow-[0_0_10px_rgba(0,243,255,0.3)]"
+                              style={{
+                                background: 'rgba(0, 243, 255, 0.08)',
+                                borderColor: 'rgba(0, 243, 255, 0.4)',
+                                color: '#00f3ff',
+                              }}
+                            >
+                              <Activity size={10} />
+                              VIEW GRAPH &amp; COUNTERMEASURES
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {/* Player Status Card */}
               <SciBox className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -907,7 +1160,21 @@ export function Home() {
                     <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
                     <XenText size="sm" glowColor="cyan">[ PLAYER STATUS ]</XenText>
                   </div>
-                  <span className="text-[10px] font-mono" style={{ color: C.textMuted }}>ID: #ND-7709-ARES</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowDailyCheckin(true)}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded text-xs font-orbitron font-bold border transition-all hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                      style={{
+                        background: 'rgba(0,243,255,0.1)',
+                        borderColor: C.cyan,
+                        color: C.cyan,
+                      }}
+                    >
+                      <Plus size={12} />
+                      DAILY CHECK-IN (+25 XP)
+                    </button>
+                    <span className="text-[10px] font-mono hidden sm:inline" style={{ color: C.textMuted }}>ID: #ND-7709-ARES</span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
@@ -946,9 +1213,19 @@ export function Home() {
                         const statusColor = status === 'healthy' ? C.green : status === 'caution' ? '#fbbf24' : status === 'critical' ? C.red : C.textMuted;
                         const displayVal = val !== null ? (ind.format ? ind.format(val) : `${val}${ind.unit !== '/10' && ind.unit !== '% SpO2' ? ` ${ind.unit}` : ''}`) : '--';
                         return (
-                          <div key={ind.id} className="bg-obsidian/60 border rounded p-2.5" style={{ borderColor: C.cyanBorder }}>
-                            <p className="text-[9px] font-mono" style={{ color: C.textMuted }}>{ind.name.toUpperCase().replace(/ /g, '-')}</p>
+                          <div
+                            key={ind.id}
+                            onClick={() => setSelectedIndicatorModal(ind.id)}
+                            className="bg-obsidian/60 border rounded p-2.5 cursor-pointer hover:border-cyan-400/60 hover:bg-obsidian/80 transition-all group"
+                            style={{ borderColor: C.cyanBorder }}
+                            title={`Click to view ${ind.name} history, graphs, and analysis`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="text-[9px] font-mono" style={{ color: C.textMuted }}>{ind.name.toUpperCase().replace(/ /g, '-')}</p>
+                              <ChevronRight size={10} className="text-cyan-400 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                            </div>
                             <p className="font-orbitron text-sm font-bold mt-0.5" style={{ color: statusColor, textShadow: `0 0 8px ${statusColor}60` }}>{displayVal}</p>
+                            <span className="text-[9px] font-mono text-cyan-400/60 group-hover:text-cyan-300 transition-colors">View graph →</span>
                           </div>
                         );
                       })}
@@ -997,6 +1274,7 @@ export function Home() {
                 onSave={handleSave}
                 onOpenHazard={handleOpenHazard}
                 onOpenActions={handleOpenActions}
+                onOpenIndicator={id => setSelectedIndicatorModal(id)}
               />
 
               {/* Indicator grid */}
@@ -1019,53 +1297,76 @@ export function Home() {
                       className="data-sci-animate"
                     >
                       <SciBox glowColor={status === 'critical' ? 'red' : status === 'healthy' ? 'green' : 'cyan'} className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg" style={{ background: `${color}12`, color }}>
-                              <FontAwesomeIcon icon={icon} size="lg" />
-                            </div>
-                            <div>
-                              <XenText size="sm" glowColor={status === 'critical' ? 'red' : 'cyan'}>{ind.name}</XenText>
-                              <div className="text-[10px] font-mono mt-0.5" style={{ color: C.textMuted }}>
-                                Normal: {ind.normalRange.join(' – ')}
-                                {ind.unit !== '/10' && ind.unit !== '% SpO2' ? ` ${ind.unit}` : ''}
+                        <div
+                          className="cursor-pointer group/card"
+                          onClick={() => setSelectedIndicatorModal(ind.id)}
+                          title={`Click to view ${ind.name} history, graph, and analysis`}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg" style={{ background: `${color}12`, color }}>
+                                <FontAwesomeIcon icon={icon} size="lg" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <XenText size="sm" glowColor={status === 'critical' ? 'red' : 'cyan'}>{ind.name}</XenText>
+                                  <ChevronRight size={12} className="text-cyan-400 opacity-40 group-hover/card:opacity-100 group-hover/card:translate-x-0.5 transition-all" />
+                                </div>
+                                <div className="text-[10px] font-mono mt-0.5" style={{ color: C.textMuted }}>
+                                  Normal: {ind.normalRange.join(' – ')}
+                                  {ind.unit !== '/10' && ind.unit !== '% SpO2' ? ` ${ind.unit}` : ''}
+                                </div>
                               </div>
                             </div>
+                            <StatusBadge status={status} />
                           </div>
-                          <StatusBadge status={status} />
-                        </div>
 
-                        <div className="flex items-end justify-between pt-2" style={{ borderTop: '1px solid rgba(0,243,255,0.1)' }}>
-                          <div className="min-w-0">
-                            {val !== null ? (
-                              <>
-                                <div className="flex items-baseline gap-2">
-                                  <span className="font-orbitron text-2xl font-bold tracking-tight" style={{ color: status === 'critical' ? C.red : status === 'caution' ? '#fbbf24' : C.text, textShadow: status === 'critical' ? '0 0 12px rgba(239,68,68,0.7)' : status === 'caution' ? '0 0 12px rgba(245,158,11,0.5)' : undefined }}>
-                                    {ind.format ? ind.format(val) : val}
-                                  </span>
-                                  {Math.abs(trend) > 0.3 && (
-                                    <span className="text-xs font-mono flex items-center gap-0.5" style={{ color: trend > 0 ? '#f87171' : C.green }}>
-                                      {trend > 0 ? '↑' : '↓'}
-                                      {Math.abs(trend).toFixed(1)}
+                          <div className="flex items-end justify-between pt-2" style={{ borderTop: '1px solid rgba(0,243,255,0.1)' }}>
+                            <div className="min-w-0">
+                              {val !== null ? (
+                                <>
+                                  <div className="flex items-baseline gap-2">
+                                    <span className="font-orbitron text-2xl font-bold tracking-tight" style={{ color: status === 'critical' ? C.red : status === 'caution' ? '#fbbf24' : C.text, textShadow: status === 'critical' ? '0 0 12px rgba(239,68,68,0.7)' : status === 'caution' ? '0 0 12px rgba(245,158,11,0.5)' : undefined }}>
+                                      {ind.format ? ind.format(val) : val}
                                     </span>
-                                  )}
-                                </div>
-                                {reading && (
-                                  <div className="text-[10px] font-mono mt-1" style={{ color: C.textMuted }}>
-                                    <Clock size={9} className="inline mr-1" />
-                                    {new Date(reading.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                    {Math.abs(trend) > 0.3 && (
+                                      <span className="text-xs font-mono flex items-center gap-0.5" style={{ color: trend > 0 ? '#f87171' : C.green }}>
+                                        {trend > 0 ? '↑' : '↓'}
+                                        {Math.abs(trend).toFixed(1)}
+                                      </span>
+                                    )}
                                   </div>
-                                )}
-                              </>
-                            ) : (
-                              <span className="text-xs" style={{ color: C.textMuted }}>No reading logged</span>
+                                  {reading && (
+                                    <div className="text-[10px] font-mono mt-1" style={{ color: C.textMuted }}>
+                                      <Clock size={9} className="inline mr-1" />
+                                      {new Date(reading.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-xs" style={{ color: C.textMuted }}>No reading logged</span>
+                              )}
+                            </div>
+                            {hist.length >= 2 && (
+                              <div className="hidden sm:block">
+                                <MiniSparkline values={hist.slice(0, 7).map(r => r.value)} color={status === 'critical' ? C.red : status === 'caution' ? '#fbbf24' : C.green} />
+                              </div>
                             )}
                           </div>
-                          {hist.length >= 2 && (
-                            <div className="hidden sm:block">
-                              <MiniSparkline values={hist.slice(0, 7).map(r => r.value)} color={status === 'critical' ? C.red : status === 'caution' ? '#fbbf24' : C.green} />
-                            </div>
-                          )}
+                        </div>
+
+                        <div className="mt-2 pt-1.5 flex items-center justify-between text-[10px] font-mono border-t border-cyan-500/10">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedIndicatorModal(ind.id)}
+                            className="text-cyan-400/90 hover:text-cyan-300 flex items-center gap-1 transition-colors"
+                          >
+                            <Activity size={10} />
+                            History & Graph →
+                          </button>
+                          <span style={{ color: C.textMuted }}>
+                            {hist.length > 0 ? `${hist.length} logs` : '0 logs'}
+                          </span>
                         </div>
 
                         {editingId === ind.id ? (
@@ -1394,7 +1695,17 @@ export function Home() {
                             </span>
                           ))}
                         </div>
-                                              </SciBox>
+                        <div className="mt-3 pt-2 flex justify-end" style={{ borderTop: '1px solid rgba(0,243,255,0.08)' }}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedIndicatorModal(ind.id)}
+                            className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
+                          >
+                            <Activity size={11} />
+                            View Telemetry & Analysis →
+                          </button>
+                        </div>
+                      </SciBox>
                       );
                     })}
                 </div>
@@ -1673,6 +1984,28 @@ export function Home() {
           )}
         </main>
       </div>
+
+      {/* ─── Indicator Detail & Analytics Modal ─── */}
+      {selectedIndicatorModal && (
+        <IndicatorDetailModal
+          indicatorId={selectedIndicatorModal}
+          history={history[selectedIndicatorModal] || []}
+          currentValue={currentValues[selectedIndicatorModal] ?? null}
+          playerId={profile.id}
+          onClose={() => setSelectedIndicatorModal(null)}
+          onLogReading={handleSave}
+          onGenerateDemo={handleGenerateDemo}
+        />
+      )}
+
+      {/* ─── Daily Check-in Modal ─── */}
+      {showDailyCheckin && (
+        <DailyCheckinModal
+          currentValues={currentValues}
+          onClose={() => setShowDailyCheckin(false)}
+          onSaveAll={handleSaveAll}
+        />
+      )}
 
       {/* Footer */}
       <footer className="mt-8 pt-4 border-t pb-4" style={{ borderColor: 'rgba(0,243,255,0.15)' }}>

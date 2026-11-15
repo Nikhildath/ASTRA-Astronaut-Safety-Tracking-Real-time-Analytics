@@ -9,6 +9,7 @@ import {
   type GameState,
   type GameStats,
 } from '../game/SpaceChaseEngine';
+import { FlightLoadingScreen } from './FlightLoadingScreen';
 
 const CYAN = '#00f3ff';
 const RED = '#ef4444';
@@ -255,6 +256,8 @@ export function SpaceChaseGame() {
   const shellRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<SpaceChaseEngine | null>(null);
   const [gameState, setGameState] = useState<GameState>('loading');
+  const [loadingProgress, setLoadingProgress] = useState(15);
+  const [loadingStatusText, setLoadingStatusText] = useState('CALIBRATING FLIGHT SYSTEMS...');
   const [stats, setStats] = useState<GameStats>(EMPTY_STATS);
   const [finalStats, setFinalStats] = useState<GameStats>(EMPTY_STATS);
   const [best, setBest] = useState(0);
@@ -295,6 +298,10 @@ export function SpaceChaseGame() {
     const engine = new SpaceChaseEngine(mount, {
       onState: state => setGameState(state),
       onStats: next => setStats(next),
+      onLoadingProgress: (prog, text) => {
+        setLoadingProgress(prog);
+        setLoadingStatusText(text);
+      },
       onGameOver: next => {
         setFinalStats(next);
         setBest(prev => {
@@ -675,13 +682,10 @@ export function SpaceChaseGame() {
 
       {/* Loading */}
       {gameState === 'loading' && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-void/80 backdrop-blur-sm">
-          <div className="w-12 h-12 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'rgba(0,243,255,0.25)', borderTopColor: CYAN }} />
-          <div className="text-center">
-            <p className="font-orbitron text-sm tracking-[0.25em]" style={{ color: CYAN }}>CALIBRATING FLIGHT SYSTEMS</p>
-            <p className="text-[10px] font-mono mt-1" style={{ color: '#64748b' }}>Loading fighter &amp; alien hull meshes…</p>
-          </div>
-        </div>
+        <FlightLoadingScreen
+          progress={loadingProgress}
+          statusText={loadingStatusText}
+        />
       )}
 
       {/* Error */}

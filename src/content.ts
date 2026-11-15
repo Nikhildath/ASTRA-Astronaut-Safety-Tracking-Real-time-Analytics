@@ -317,6 +317,8 @@ export const bodySystems = [
   },
 ];
 
+export type Indicator = (typeof indicators)[number];
+
 export type Reading = {
   indicatorId: string;
   value: number;
