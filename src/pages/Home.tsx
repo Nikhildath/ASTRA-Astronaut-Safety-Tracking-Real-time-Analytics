@@ -694,7 +694,7 @@ export function Home() {
   }, [profile.id]);
 
   return (
-    <div className="min-h-screen bg-void text-slate-100 font-sans overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen bg-void text-slate-100 font-sans" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Scanline overlay */}
       <div className="fixed inset-0 z-40 pointer-events-none" style={{
         background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 50%, rgba(0,243,255,0.018) 50%, rgba(0,243,255,0.018) 100%)',
@@ -845,26 +845,36 @@ export function Home() {
         </div>
       </header>
 
+      {/* Mobile tab bar — sticky under the header so all tabs stay reachable */}
+      <div
+        className="md:hidden sticky top-[57px] z-30 px-4 sm:px-6 py-1.5 border-b"
+        style={{ borderColor: C.cyanBorder, background: 'rgba(3,5,10,0.92)', backdropFilter: 'blur(8px)' }}
+      >
+        <nav
+          className="relative z-10 grid grid-cols-6 gap-1 p-1 rounded border"
+          style={{ borderColor: C.cyanBorder, background: 'rgba(13,19,34,0.82)' }}
+        >
+          {(['dashboard', 'body', 'actions', 'education', 'profile'] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`py-2 rounded text-[10px] font-mono transition-all ${view === v ? 'bg-cyan-950/90 border border-cyan-500/60 text-cyan-300' : 'text-slate-400 hover:text-cyan-300 border border-transparent'}`}
+            >
+              {v === 'dashboard' ? 'Dash' : v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+          <Link
+            to="/stress-relief"
+            className="py-2 rounded text-[10px] font-mono transition-all text-slate-400 hover:text-cyan-300 border border-transparent flex items-center justify-center"
+          >
+            Relief
+          </Link>
+        </nav>
+      </div>
+
       {/* Main layout */}
       <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto px-4 sm:px-6 pt-6 gap-6">
         {/* Sidebar */}              <aside className="lg:w-64 shrink-0 space-y-4">
-          <nav className="md:hidden grid grid-cols-6 gap-1 p-1 rounded border" style={{ borderColor: C.cyanBorder, background: 'rgba(13,19,34,0.82)' }}>
-            {(['dashboard', 'body', 'actions', 'education', 'profile'] as const).map(v => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`py-2 rounded text-[10px] font-mono transition-all ${view === v ? 'bg-cyan-950/90 border border-cyan-500/60 text-cyan-300' : 'text-slate-400 hover:text-cyan-300 border border-transparent'}`}
-              >
-                {v === 'dashboard' ? 'Dash' : v.charAt(0).toUpperCase() + v.slice(1)}
-              </button>
-            ))}
-            <Link
-              to="/stress-relief"
-              className="py-2 rounded text-[10px] font-mono transition-all text-slate-400 hover:text-cyan-300 border border-transparent flex items-center justify-center"
-            >
-              Relief
-            </Link>
-          </nav>
           <SciBox className="space-y-4">
             {/* Player status mini */}
             <div className="flex items-center justify-between">
