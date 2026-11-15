@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router';
 import { motion } from 'framer-motion';
 import {
   Globe, Activity, AlertTriangle, Check, Plus, Clock,
   Star, Zap, ChevronRight, Settings, HelpCircle, Award,
-  Wifi, Shield,
+  Wifi, Shield, Crosshair,
 } from 'lucide-react';
 import { faHeart, faLungs, faDroplet, faThermometerHalf, faMoon, faFaceSmile, faWater, faFlask, faBrain, faBone, faShieldHalved, faSun, faGlobe, faHouse, faQuestionCircle, faBan, faLock, faMedal } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -631,6 +632,13 @@ export function Home() {
                     {v.charAt(0).toUpperCase() + v.slice(1)}
                   </button>
                 ))}
+                <Link
+                  to="/stress-relief"
+                  className="px-3 py-1.5 rounded text-xs font-mono transition-all duration-200 border border-transparent text-slate-400 hover:text-cyan-300 hover:bg-panel flex items-center"
+                >
+                  <Crosshair size={11} className="inline mr-1.5" />
+                  Stress Relief
+                </Link>
               </nav>
             </div>
 
@@ -712,7 +720,7 @@ export function Home() {
       {/* Main layout */}
       <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto px-4 sm:px-6 pt-6 gap-6">
         {/* Sidebar */}              <aside className="lg:w-64 shrink-0 space-y-4">
-          <nav className="md:hidden grid grid-cols-5 gap-1 p-1 rounded border" style={{ borderColor: C.cyanBorder, background: 'rgba(13,19,34,0.82)' }}>
+          <nav className="md:hidden grid grid-cols-6 gap-1 p-1 rounded border" style={{ borderColor: C.cyanBorder, background: 'rgba(13,19,34,0.82)' }}>
             {(['dashboard', 'body', 'actions', 'education', 'profile'] as const).map(v => (
               <button
                 key={v}
@@ -722,6 +730,12 @@ export function Home() {
                 {v === 'dashboard' ? 'Dash' : v.charAt(0).toUpperCase() + v.slice(1)}
               </button>
             ))}
+            <Link
+              to="/stress-relief"
+              className="py-2 rounded text-[10px] font-mono transition-all text-slate-400 hover:text-cyan-300 border border-transparent flex items-center justify-center"
+            >
+              Relief
+            </Link>
           </nav>
           <SciBox className="space-y-4">
             {/* Player status mini */}
