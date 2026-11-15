@@ -1,0 +1,171 @@
+<!doctype html>
+<html
+  lang="en"
+  data-composition-variables='[
+    {"id":"color-ground","type":"color","label":"Background","default":"#030509"},
+    {"id":"color-ink","type":"color","label":"Text","default":"#e2e8f0"},
+    {"id":"color-accent","type":"color","label":"Accent","default":"#00f3ff"},
+    {"id":"color-caution","type":"color","label":"Caution","default":"#fbbf24"},
+    {"id":"copy-punchline","type":"string","label":"Punchline","default":"Also: alien dogfights."}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>A.S.T.R.A. — Brag</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      :root {
+        --ground: var(--color-ground);
+        --ink: var(--color-ink);
+        --accent: var(--color-accent);
+        --caution: var(--color-caution);
+        --dim: #94a3b8;
+        --muted: #64748b;
+        --panel: #0d1322;
+        --obsidian: #080c14;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ground);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: var(--ground);
+        color: var(--ink);
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="20"
+      data-width="1920"
+      data-height="1080"
+      data-motion-blur="off"
+    >
+      <div
+        id="mission"
+        data-composition-id="mission"
+        data-composition-src="compositions/s1-mission.html"
+        data-start="0"
+        data-duration="3.18"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="dashboard"
+        data-composition-id="dashboard"
+        data-composition-src="compositions/s2-dashboard.html"
+        data-start="3.18"
+        data-duration="3.16"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="launch"
+        data-composition-id="launch"
+        data-composition-src="compositions/s3-launch.html"
+        data-start="6.34"
+        data-duration="3.16"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="combat"
+        data-composition-id="combat"
+        data-composition-src="compositions/s4-combat.html"
+        data-start="9.5"
+        data-duration="3.15"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="worlds"
+        data-composition-id="worlds"
+        data-composition-src="compositions/s5-worlds.html"
+        data-start="12.65"
+        data-duration="3.69"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="outro"
+        data-composition-id="outro"
+        data-composition-src="compositions/s6-outro.html"
+        data-start="16.34"
+        data-duration="3.66"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <audio
+        id="bed"
+        class="clip"
+        data-start="0"
+        data-duration="20"
+        data-track-index="3"
+        data-volume="0.55"
+        data-fade-out="1.2"
+        src="assets/music/happy-beats-business-moves-vol-11-by-ende-dot-app.mp3"
+      ></audio>
+
+      <!-- scene 1: log rows + headline -->
+      <audio id="sfx-row-1" class="clip" data-start="0.22" data-duration="0.25" data-track-index="4" data-volume="0.4" src="assets/sfx/keypress-001.wav"></audio>
+      <audio id="sfx-row-2" class="clip" data-start="0.5" data-duration="0.25" data-track-index="4" data-volume="0.35" src="assets/sfx/keypress-003.wav"></audio>
+      <audio id="sfx-headline" class="clip" data-start="1.6" data-duration="0.05" data-track-index="4" data-volume="0.5" src="assets/sfx/click_005.ogg"></audio>
+
+      <!-- scene 2: vitals cards one by one, then the nav click -->
+      <audio id="sfx-card-1" class="clip" data-start="3.7" data-duration="0.06" data-track-index="4" data-volume="0.3" src="assets/sfx/click2.ogg"></audio>
+      <audio id="sfx-card-2" class="clip" data-start="4.23" data-duration="0.06" data-track-index="4" data-volume="0.3" src="assets/sfx/click2.ogg"></audio>
+      <audio id="sfx-card-3" class="clip" data-start="4.75" data-duration="0.06" data-track-index="4" data-volume="0.3" src="assets/sfx/click2.ogg"></audio>
+      <audio id="sfx-card-4" class="clip" data-start="5.28" data-duration="0.06" data-track-index="4" data-volume="0.3" src="assets/sfx/click2.ogg"></audio>
+      <audio id="sfx-nav" class="clip" data-start="5.8" data-duration="0.05" data-track-index="4" data-volume="0.75" src="assets/sfx/click_002.ogg"></audio>
+
+      <!-- scene 3: launch press -->
+      <audio id="sfx-launch" class="clip" data-start="8.96" data-duration="0.05" data-track-index="4" data-volume="0.9" src="assets/sfx/click_003.ogg"></audio>
+
+      <!-- scene 4: incoming fire and hull loss -->
+      <audio id="sfx-fire-1" class="clip" data-start="10.02" data-duration="0.06" data-track-index="4" data-volume="0.35" src="assets/sfx/select_008.ogg"></audio>
+      <audio id="sfx-hull-1" class="clip" data-start="10.42" data-duration="0.24" data-track-index="4" data-volume="0.5" src="assets/sfx/impactMetal_light_002.ogg"></audio>
+      <audio id="sfx-fire-2" class="clip" data-start="10.98" data-duration="0.06" data-track-index="4" data-volume="0.3" src="assets/sfx/select_008.ogg"></audio>
+      <audio id="sfx-hull-2" class="clip" data-start="11.52" data-duration="0.24" data-track-index="4" data-volume="0.45" src="assets/sfx/impactMetal_light_002.ogg"></audio>
+
+      <!-- scene 5: kill, then the world prompt -->
+      <audio id="sfx-kill" class="clip" data-start="12.66" data-duration="0.17" data-track-index="4" data-volume="0.85" src="assets/sfx/impactMetal_heavy_000.ogg"></audio>
+      <audio id="sfx-world" class="clip" data-start="14.12" data-duration="0.06" data-track-index="4" data-volume="0.4" src="assets/sfx/select_008.ogg"></audio>
+
+      <!-- scene 6: wordmark, punchline -->
+      <audio id="sfx-mark" class="clip" data-start="16.56" data-duration="0.06" data-track-index="4" data-volume="0.5" src="assets/sfx/select_008.ogg"></audio>
+      <audio id="sfx-punch" class="clip" data-start="17.91" data-duration="0.05" data-track-index="4" data-volume="0.45" src="assets/sfx/click_005.ogg"></audio>
+    </div>
+    <script>
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>
