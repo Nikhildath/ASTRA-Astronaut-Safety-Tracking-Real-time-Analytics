@@ -1,6 +1,6 @@
 // Strips files the Sites uploader refuses (hidden files and source maps)
-// from the build output, so `deploy.json` can point straight at dist/.
-import { readdirSync, rmSync, statSync } from 'node:fs'
+// from the build output, and copies dist/client to dist root for Vercel/Netlify hosting.
+import { readdirSync, rmSync, statSync, existsSync, cpSync } from 'node:fs'
 import { join } from 'node:path'
 
 function clean(dir) {
@@ -14,4 +14,14 @@ function clean(dir) {
   }
 }
 
-const distDir = 'dist'; try { clean(distDir); } catch(e) { console.log('Postbuild cleanup skipped'); }
+const distDir = 'dist'
+try {
+  clean(distDir)
+  // When @cloudflare/vite-plugin builds to dist/client, sync to dist root so Vercel can serve index.html directly
+  if (existsSync('dist/client')) {
+    cpSync('dist/client', 'dist', { recursive: true })
+    console.log('Postbuild: Synced dist/client to dist root for host compatibility')
+  }
+} catch (e) {
+  console.log('Postbuild cleanup skipped:', e)
+}
