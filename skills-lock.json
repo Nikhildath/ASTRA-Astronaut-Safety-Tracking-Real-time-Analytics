@@ -30,6 +30,12 @@
       "sourceType": "github",
       "skillPath": "skills/media-use/SKILL.md",
       "computedHash": "d6673d9e46691709e1a2e6a30b0d7adbd6f176165648a719dafbe19e6d004674"
+    },
+    "shieldcn-badges": {
+      "source": "jal-co/shieldcn",
+      "sourceType": "github",
+      "skillPath": "skills/shieldcn-badges/SKILL.md",
+      "computedHash": "c421a80f3ff6d736264d927d40e4c5d3384aab5e6681ba2da663cb34daef71dd"
     }
   }
 }
